@@ -16,9 +16,9 @@ import game_icon from '../../assets/images/game_icon.png'
 import news from '../../assets/images/news.png'
 import sports from '../../assets/images/sports.png'
 
-const SideBar = () => {
+const SideBar = ({ sidebar }) => {
     return (
-        <div className='sidebar'>
+        <div className={` sidebar ${sidebar ? '' : 'small-sidebar'}`}>
             <div className='shortcut-links'>
                 <div className='side-link'>
                     <img src={home} alt="" /><p>Trang chủ</p>
@@ -27,7 +27,7 @@ const SideBar = () => {
                     <img src={subscription} alt="" /><p>Kênh đăng ký</p>
                 </div>
                 <hr />
-
+                <h3>Bạn</h3>
                 <div className='side-link'>
                     <img src={history} alt="" /><p>Video đã xem</p>
                 </div>
@@ -38,28 +38,30 @@ const SideBar = () => {
                     <img src={like} alt="" /><p>Video đã thích</p>
                 </div>
                 <hr />
+            </div>
 
-                <div className='subscribed-list'>
-                    <h3>Kênh đăng ký</h3>
-                    <div className='side-link'>
-                        <img src={jack} alt="" /><p>Jack</p>
-                    </div>
-                    <div className='side-link'>
-                        <img src={simon} alt="" /><p>Simon</p>
-                    </div>
-                    <div className='side-link'>
-                        <img src={tom} alt="" /><p>Tom</p>
-                    </div>
-                    <div className='side-link'>
-                        <img src={megan} alt="" /><p>Megan</p>
-                    </div>
-                    <div className='side-link'>
-                        <img src={cameron} alt="" /><p>Cameron</p>
-                    </div>
-
+            <div className='subscribed-list'>
+                <h3>Kênh đăng ký</h3>
+                <div className='side-link'>
+                    <img src={jack} alt="" /><p>Jack</p>
+                </div>
+                <div className='side-link'>
+                    <img src={simon} alt="" /><p>Simon</p>
+                </div>
+                <div className='side-link'>
+                    <img src={tom} alt="" /><p>Tom</p>
+                </div>
+                <div className='side-link'>
+                    <img src={megan} alt="" /><p>Megan</p>
+                </div>
+                <div className='side-link'>
+                    <img src={cameron} alt="" /><p>Cameron</p>
                 </div>
                 <hr />
+            </div>
 
+            <div className='shortcut-links'>
+                <h3>Khám phá</h3>
                 <div className='side-link'>
                     <img src={explore} alt="" /><p>Thịnh hành</p>
                 </div>
@@ -77,7 +79,6 @@ const SideBar = () => {
                 </div>
                 <hr />
             </div>
-
         </div>
     )
 }

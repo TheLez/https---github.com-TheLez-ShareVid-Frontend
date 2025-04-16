@@ -1,15 +1,17 @@
 import React from 'react';
 import { Route, Routes } from 'react-router-dom';
-import { DefaultLayout } from './components/Layout/DefaultLayout/DefaultLayout';
+import NavBar from './components/NavBar/NavBar';
 import Home from './pages/Home/Home';
 import Video from './pages/Video/Video';
 
 function App() {
+  const [sidebar, setSidebar] = React.useState(true);
+
   return (
     <div>
-      <DefaultLayout />
+      <NavBar setSidebar={setSidebar} />
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<Home sidebar={sidebar} />} />
         <Route path="/video/:categoryId/:videoId" element={<Video />} />
       </Routes>
     </div>

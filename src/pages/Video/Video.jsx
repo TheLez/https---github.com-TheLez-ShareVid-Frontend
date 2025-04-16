@@ -1,10 +1,11 @@
 import React from 'react'
 import './Video.scss'
+import PlayVideo from '../../components/PlayVideo/PlayVideo'
 
 const Video = () => {
     return (
-        <div>
-
+        <div className='play-container'>
+            <PlayVideo />
         </div>
     )
 }

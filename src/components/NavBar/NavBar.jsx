@@ -1,5 +1,3 @@
-import React, { useState } from 'react';
-import { Form, Icon, Image, Input, Menu } from 'semantic-ui-react';
 import './NavBar.scss';
 import logo from '../../assets/images/logo.jpg';
 import menu_icon from '../../assets/images/menu.png';
@@ -8,13 +6,12 @@ import upload_icon from '../../assets/images/upload.png';
 import blogs_icon from '../../assets/images/blogs.png';
 import notification_icon from '../../assets/images/notification.png';
 import profile_icon from '../../assets/images/jack.png';
-import { Link, useNavigate } from 'react-router-dom';
 
-const NavBar = () => {
+const NavBar = ({ setSidebar }) => {
     return (
         <nav className="flex-div">
             <div className="nav-left flex-div">
-                <img className='menu-icon' src={menu_icon} alt="" />
+                <img className='menu-icon' onClick={() => setSidebar(prev => prev === false ? true : false)} src={menu_icon} alt="" />
                 <img className='logo' src={logo} alt="" />
             </div>
 
