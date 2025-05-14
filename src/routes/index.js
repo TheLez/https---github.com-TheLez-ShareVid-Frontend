@@ -1,6 +1,6 @@
-import Home from '../pages/Home/Home'
-import History from '../pages/History'
-import NotFound from '../pages/NotFound'
+import Home from '../pages/Home/Home';
+import Login from '../pages/Login/Login'; // Thêm import cho Login
+import Register from '../pages/Register/Register'; // Thêm import cho Register
 
 export const routes = [
     {
@@ -9,12 +9,13 @@ export const routes = [
         isShowHeader: true
     },
     {
-        path: '/history',
-        page: History,
-        isShowHeader: true
+        path: '/login',
+        page: Login, // Thêm route cho Login
+        isShowHeader: false // Nếu không cần hiển thị header
     },
     {
-        path: '*',
-        page: NotFound
+        path: '/register',
+        page: Register, // Thêm route cho Register
+        isShowHeader: false // Nếu không cần hiển thị header
     }
-]
+];

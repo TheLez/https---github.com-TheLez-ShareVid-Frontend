@@ -11,7 +11,7 @@ import user_profile from '../../assets/images/user_profile.jpg'
 const PlayVideo = () => {
     return (
         <div className='play-video'>
-            <video src={video1} controls autoPlay muted></video>
+            <video src="https://sharevid.s3.ap-southeast-2.amazonaws.com/video.mp4" controls autoPlay></video>
             <h3>Best YouTube Channel To Learn Web Development</h3>
             <div className='play-video-info'>
                 <p>1525 lượt xem &bull; 2 ngày trước</p>

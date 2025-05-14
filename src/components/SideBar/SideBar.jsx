@@ -16,25 +16,25 @@ import game_icon from '../../assets/images/game_icon.png'
 import news from '../../assets/images/news.png'
 import sports from '../../assets/images/sports.png'
 
-const SideBar = ({ sidebar }) => {
+const SideBar = ({ sidebar, category, setCategory }) => {
     return (
         <div className={` sidebar ${sidebar ? '' : 'small-sidebar'}`}>
             <div className='shortcut-links'>
-                <div className='side-link'>
+                <div className={`side-link ${category === 0 ? "active" : ""}`} onClick={() => setCategory(0)}>
                     <img src={home} alt="" /><p>Trang chủ</p>
                 </div>
-                <div className='side-link'>
+                <div className={`side-link ${category === 6 ? "active" : ""}`} onClick={() => setCategory(6)}>
                     <img src={subscription} alt="" /><p>Kênh đăng ký</p>
                 </div>
                 <hr />
                 <h3>Bạn</h3>
-                <div className='side-link'>
+                <div className={`side-link ${category === 7 ? "active" : ""}`} onClick={() => setCategory(7)}>
                     <img src={history} alt="" /><p>Video đã xem</p>
                 </div>
-                <div className='side-link'>
-                    <img src={library} alt="" /><p>Danh sách phát</p>
+                <div className={`side-link ${category === 8 ? "active" : ""}`} onClick={() => setCategory(8)}>
+                    <img src={library} alt="" /><p>Danh sách lưu</p>
                 </div>
-                <div className='side-link'>
+                <div className={`side-link ${category === 9 ? "active" : ""}`} onClick={() => setCategory(9)}>
                     <img src={like} alt="" /><p>Video đã thích</p>
                 </div>
                 <hr />
@@ -62,19 +62,19 @@ const SideBar = ({ sidebar }) => {
 
             <div className='shortcut-links'>
                 <h3>Khám phá</h3>
-                <div className='side-link'>
+                <div className={`side-link ${category === 5 ? "active" : ""}`} onClick={() => setCategory(5)}>
                     <img src={explore} alt="" /><p>Thịnh hành</p>
                 </div>
-                <div className='side-link'>
+                <div className={`side-link ${category === 1 ? "active" : ""}`} onClick={() => setCategory(1)}>
                     <img src={music} alt="" /><p>Âm nhạc</p>
                 </div>
-                <div className='side-link'>
+                <div className={`side-link ${category === 2 ? "active" : ""}`} onClick={() => setCategory(2)}>
                     <img src={game_icon} alt="" /><p>Trò chơi</p>
                 </div>
-                <div className='side-link'>
+                <div className={`side-link ${category === 3 ? "active" : ""}`} onClick={() => setCategory(3)}>
                     <img src={news} alt="" /><p>Tin tức</p>
                 </div>
-                <div className='side-link'>
+                <div className={`side-link ${category === 4 ? "active" : ""}`} onClick={() => setCategory(4)}>
                     <img src={sports} alt="" /><p>Thể thao</p>
                 </div>
                 <hr />
