@@ -41,6 +41,19 @@ nav {
 }
 
 .nav-right .user-icon {
-  width: 35px;
-  border-radius: 50%;
+  width: 35px; /* Kích thước hình ảnh */
+  height: 35px; /* Đảm bảo chiều cao đồng nhất */
+  border-radius: 50%; /* Hình tròn */
+  object-fit: cover; /* Đảm bảo ảnh không bị méo */
+  display: inline-block; /* Đảm bảo hiển thị đúng */
+}
+
+.dropdown-menu {
+  border-radius: 4px;
+  min-width: 120px;
+  font-size: 14px;
+}
+
+.dropdown-menu button:hover {
+  background-color: #f2f2f2;
 }

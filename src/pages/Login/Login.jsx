@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../authContext'; // Nhập useAuth
+import { useAuth } from '../../authContext';
+import { jwtDecode } from 'jwt-decode'; // Gọi đúng tên
 import './Login.scss';
 
 const Login = () => {
@@ -9,25 +10,22 @@ const Login = () => {
     const [password, setPassword] = useState('');
     const [message, setMessage] = useState('');
     const navigate = useNavigate();
-    const { setIsAuthenticated } = useAuth(); // Lấy hàm setIsAuthenticated
+    const { login } = useAuth();
 
     const handleLogin = async (e) => {
         e.preventDefault();
-        setMessage(''); // Reset message trước khi gọi API
+        setMessage('');
 
         try {
             const response = await axios.post('http://localhost:5000/api/account/sign-in', { email, password });
 
-            // Kiểm tra điều kiện thành công từ API
             if (response.data.status === "OK") {
-                // Lưu access token vào localStorage
-                localStorage.setItem('access_token', response.data.access_token);
-                localStorage.setItem('refresh_token', response.data.refresh_token);
+                const { access_token, account } = response.data; // Nhận cả token và thông tin tài khoản
+                localStorage.setItem('access_token', access_token);
 
-                // Cập nhật trạng thái xác thực
-                setIsAuthenticated(true); // Thiết lập trạng thái xác thực
+                // Lưu thông tin người dùng
+                login({ id: account.id, role: account.role, name: account.name });
 
-                // Chuyển đến trang Home
                 navigate('/');
             } else {
                 setMessage('Đăng nhập không thành công. Vui lòng kiểm tra lại email và mật khẩu.');
