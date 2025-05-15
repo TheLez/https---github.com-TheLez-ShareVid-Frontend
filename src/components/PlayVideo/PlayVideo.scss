@@ -3,7 +3,11 @@
 }
 
 .play-video video {
-    width: 100%;
+    width: 100%; /* Chiều rộng 100% của container */
+    height: auto; /* Để chiều cao tự động theo chiều rộng */
+    aspect-ratio: 16 / 9; /* Tỷ lệ 16:9 */
+    object-fit: contain; /* Giữ tỷ lệ khung hình và thêm màu đen nếu cần */
+    background-color: black; /* Màu nền cho video */
 }
 
 .play-video h3 {
@@ -135,4 +139,51 @@
 .comment-action span {
     margin-right: 20px;
     color: #5a5a5a;
+}
+
+.comment-form {
+    display: flex;
+    margin-top: 20px;
+}
+
+.comment-form input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-right: 10px;
+}
+
+.comment-form button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.comment-form button:hover {
+    background-color: #0056b3;
+}
+
+.play-video-info {
+    display: flex;
+    align-items: center;
+}
+
+.icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 10px;
+    cursor: pointer;
+    transition: filter 0.3s ease;
+}
+
+.icon:hover {
+    filter: brightness(0) saturate(100%) invert(50%); /* Màu khi hover */
+}
+
+.icon.active {
+    filter: brightness(0) saturate(100%) invert(20%); /* Màu khi đã được chọn */
 }

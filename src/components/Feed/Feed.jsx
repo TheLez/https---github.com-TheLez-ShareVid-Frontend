@@ -1,118 +1,45 @@
-import React from 'react'
-import './Feed.scss'
-import thumbnail1 from '../../assets/images/thumbnail1.png'
-import thumbnail2 from '../../assets/images/thumbnail2.png'
-import thumbnail3 from '../../assets/images/thumbnail3.png'
-import thumbnail4 from '../../assets/images/thumbnail4.png'
-import thumbnail5 from '../../assets/images/thumbnail5.png'
-import thumbnail6 from '../../assets/images/thumbnail6.png'
-import thumbnail7 from '../../assets/images/thumbnail7.png'
-import thumbnail8 from '../../assets/images/thumbnail8.png'
-import { Link } from 'react-router-dom'
+import React, { useEffect, useState } from 'react';
+import './Feed.scss';
+import { Link } from 'react-router-dom';
+import axiosInstance from '../../utils/axiosInstance';
+import timeAgo from '../../utils/timeAgo'; // Import hàm
 
 const Feed = ({ category }) => {
+    const [videos, setVideos] = useState([]);
+    const [error, setError] = useState(null);
 
+    useEffect(() => {
+        const fetchVideos = async () => {
+            try {
+                const res = await axiosInstance.get('/video/get-all');
+                setVideos(res.data.data || []);
+            } catch (err) {
+                console.error('Lỗi khi lấy danh sách video:', err);
+                setError('Không thể tải danh sách video.');
+            }
+        };
+
+        fetchVideos();
+    }, [category]);
 
     return (
         <div className='feed'>
-            <Link to={`video/20/4521`} className='card'>
-                <img src={thumbnail1} alt="" />
-                <h2>Best channel to learn coding that help you to be a web developer</h2>
-                <h3>GreatStack</h3>
-                <p>15k views &bull; 2 days ago</p>
-            </Link>
-            <div className='card'>
-                <img src={thumbnail2} alt="" />
-                <h2>Best channel to learn coding that help you to be a web developer</h2>
-                <h3>GreatStack</h3>
-                <p>15k views &bull; 2 days ago</p>
-            </div>
-            <div className='card'>
-                <img src={thumbnail3} alt="" />
-                <h2>Best channel to learn coding that help you to be a web developer</h2>
-                <h3>GreatStack</h3>
-                <p>15k views &bull; 2 days ago</p>
-            </div>
-            <div className='card'>
-                <img src={thumbnail4} alt="" />
-                <h2>Best channel to learn coding that help you to be a web developer</h2>
-                <h3>GreatStack</h3>
-                <p>15k views &bull; 2 days ago</p>
-            </div>
-            <div className='card'>
-                <img src={thumbnail5} alt="" />
-                <h2>Best channel to learn coding that help you to be a web developer</h2>
-                <h3>GreatStack</h3>
-                <p>15k views &bull; 2 days ago</p>
-            </div>
-            <div className='card'>
-                <img src={thumbnail6} alt="" />
-                <h2>Best channel to learn coding that help you to be a web developer</h2>
-                <h3>GreatStack</h3>
-                <p>15k views &bull; 2 days ago</p>
-            </div>
-            <div className='card'>
-                <img src={thumbnail7} alt="" />
-                <h2>Best channel to learn coding that help you to be a web developer</h2>
-                <h3>GreatStack</h3>
-                <p>15k views &bull; 2 days ago</p>
-            </div>
-            <div className='card'>
-                <img src={thumbnail8} alt="" />
-                <h2>Best channel to learn coding that help you to be a web developer</h2>
-                <h3>GreatStack</h3>
-                <p>15k views &bull; 2 days ago</p>
-            </div>
-            <div className='card'>
-                <img src={thumbnail1} alt="" />
-                <h2>Best channel to learn coding that help you to be a web developer</h2>
-                <h3>GreatStack</h3>
-                <p>15k views &bull; 2 days ago</p>
-            </div>
-            <div className='card'>
-                <img src={thumbnail2} alt="" />
-                <h2>Best channel to learn coding that help you to be a web developer</h2>
-                <h3>GreatStack</h3>
-                <p>15k views &bull; 2 days ago</p>
-            </div>
-            <div className='card'>
-                <img src={thumbnail3} alt="" />
-                <h2>Best channel to learn coding that help you to be a web developer</h2>
-                <h3>GreatStack</h3>
-                <p>15k views &bull; 2 days ago</p>
-            </div>
-            <div className='card'>
-                <img src={thumbnail4} alt="" />
-                <h2>Best channel to learn coding that help you to be a web developer</h2>
-                <h3>GreatStack</h3>
-                <p>15k views &bull; 2 days ago</p>
-            </div>
-            <div className='card'>
-                <img src={thumbnail5} alt="" />
-                <h2>Best channel to learn coding that help you to be a web developer</h2>
-                <h3>GreatStack</h3>
-                <p>15k views &bull; 2 days ago</p>
-            </div>
-            <div className='card'>
-                <img src={thumbnail6} alt="" />
-                <h2>Best channel to learn coding that help you to be a web developer</h2>
-                <h3>GreatStack</h3>
-                <p>15k views &bull; 2 days ago</p>
-            </div>
-            <div className='card'>
-                <img src={thumbnail7} alt="" />
-                <h2>Best channel to learn coding that help you to be a web developer</h2>
-                <h3>GreatStack</h3>
-                <p>15k views &bull; 2 days ago</p>
-            </div>
-            <div className='card'>
-                <img src={thumbnail8} alt="" />
-                <h2>Best channel to learn coding that help you to be a web developer</h2>
-                <h3>GreatStack</h3>
-                <p>15k views &bull; 2 days ago</p>
-            </div>
-        </div >
-    )
-}
+            {error && <div className="error">{error}</div>}
 
-export default Feed
+            {videos.map((video) => (
+                <Link
+                    to={`/video/${video.videoid}`}
+                    className='card'
+                    key={video.videoid}
+                >
+                    <img src={video.thumbnail} alt={video.title} />
+                    <h2>{video.title}</h2>
+                    <h3>{video.Account?.name || 'Không rõ người đăng'}</h3>
+                    <p>{video.videoview} lượt xem &bull; {timeAgo(video.created_at)}</p>
+                </Link>
+            ))}
+        </div>
+    );
+};
+
+export default Feed;

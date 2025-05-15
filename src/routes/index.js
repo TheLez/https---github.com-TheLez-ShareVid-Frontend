@@ -1,6 +1,8 @@
 import Home from '../pages/Home/Home';
 import Login from '../pages/Login/Login'; // Thêm import cho Login
 import Register from '../pages/Register/Register'; // Thêm import cho Register
+import Video from '../pages/Video/Video'; // Thêm import cho Video
+import PlayVideo from '../components/PlayVideo/PlayVideo';
 
 export const routes = [
     {
@@ -17,5 +19,10 @@ export const routes = [
         path: '/register',
         page: Register, // Thêm route cho Register
         isShowHeader: false // Nếu không cần hiển thị header
+    },
+    {
+        path: '/video/:videoId', // Thêm route cho Video
+        page: Video,
+        isShowHeader: true // Hoặc false tùy thuộc vào yêu cầu của bạn
     }
 ];

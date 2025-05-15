@@ -20,9 +20,11 @@ const Login = () => {
             const response = await axios.post('http://localhost:5000/api/account/sign-in', { email, password });
 
             if (response.data.status === "OK") {
-                const { access_token, account } = response.data; // Nhận cả token và thông tin tài khoản
+                const { access_token, refresh_token, account } = response.data; // Nhận cả token và thông tin tài khoản
                 localStorage.setItem('access_token', access_token);
-
+                localStorage.setItem('refresh_token', refresh_token);
+                console.log("Access Token:", access_token);
+                console.log("Refresh Token:", refresh_token);
                 // Lưu thông tin người dùng
                 login({ id: account.id, role: account.role, name: account.name });
 

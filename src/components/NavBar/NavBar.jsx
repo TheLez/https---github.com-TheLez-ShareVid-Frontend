@@ -7,27 +7,22 @@ import upload_icon from '../../assets/images/upload.png';
 import blogs_icon from '../../assets/images/blogs.png';
 import notification_icon from '../../assets/images/notification.png';
 import { useAuth } from '../../authContext';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance'; // 👉 thay vì axios thường
 import { useNavigate } from 'react-router-dom';
 
 const NavBar = ({ setSidebar }) => {
-    const { user, logout } = useAuth(); // Giả sử context có hàm logout
+    const { user, logout } = useAuth();
     const [accountInfo, setAccountInfo] = useState(null);
     const [error, setError] = useState(null);
-    const [showMenu, setShowMenu] = useState(false); // Trạng thái menu logout
-    const token = localStorage.getItem('access_token');
+    const [showMenu, setShowMenu] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
         const fetchAccountInfo = async () => {
             setError(null);
-            if (user && user.id && token) {
+            if (user && user.id) {
                 try {
-                    const response = await axios.get(`http://localhost:5000/api/account/get-account/${user.id}`, {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
-                    });
+                    const response = await axiosInstance.get(`/account/get-account/${user.id}`);
                     setAccountInfo(response.data);
                 } catch (error) {
                     console.error("Error fetching account info:", error);
@@ -36,11 +31,12 @@ const NavBar = ({ setSidebar }) => {
             }
         };
         fetchAccountInfo();
-    }, [user, token]);
+    }, [user]);
 
     const handleLogout = () => {
         localStorage.removeItem('access_token');
-        if (logout) logout(); // Gọi hàm logout từ context nếu có
+        localStorage.removeItem('refresh_token');
+        if (logout) logout();
         navigate('/login');
     };
 
