@@ -1,4 +1,3 @@
-// ... giữ nguyên các import
 import React, { useEffect, useState } from 'react';
 import './PlayVideo.scss';
 import axiosInstance from '../../utils/axiosInstance';
@@ -29,7 +28,6 @@ const PlayVideo = () => {
                 if (response.status === 200) {
                     setVideo(response.data);
                     await updateViewCount();
-                    setUserLike(null); // Reset trước
                     await checkUserLike();
                 } else {
                     setError("Video không tồn tại.");
@@ -58,11 +56,23 @@ const PlayVideo = () => {
         try {
             const response = await axiosInstance.get(`/comment/video/${video.videoid}`);
             if (response.data?.data) {
-                setComments(response.data.data);
+                const commentsData = response.data.data;
+                await checkUserCommentLike(commentsData); // Kiểm tra trạng thái like cho từng bình luận
             }
         } catch (error) {
             console.error("Lỗi khi lấy bình luận:", error);
         }
+    };
+
+    const checkUserCommentLike = async (commentsData) => {
+        const updatedComments = await Promise.all(commentsData.map(async (comment) => {
+            const likeResponse = await axiosInstance.get(`/like-comment/like-comment/${comment.commentid}`);
+            return {
+                ...comment,
+                userLike: likeResponse.data ? likeResponse.data.type : null // 1: like, 0: dislike
+            };
+        }));
+        setComments(updatedComments);
     };
 
     useEffect(() => {
@@ -145,6 +155,63 @@ const PlayVideo = () => {
         }
     };
 
+    // Thêm các hàm xử lý like và dislike cho bình luận
+    const handleCommentLike = async (commentId) => {
+        try {
+            const comment = comments.find(c => c.commentid === commentId);
+
+            if (comment.userLike === 1) {
+                // Đã like rồi, bấm lại sẽ unlike
+                await axiosInstance.delete(`/like-comment/unlike-comment/${commentId}`);
+            } else {
+                // Nếu đang dislike (userLike === 0), thì xóa dislike trước
+                if (comment.userLike === 0) {
+                    await axiosInstance.delete(`/like-comment/unlike-comment/${commentId}`);
+                }
+
+                // Thêm like mới
+                await axiosInstance.post('/like-comment/like-comment', {
+                    userid: user.userid,
+                    commentid: commentId,
+                    type: 1,
+                });
+            }
+
+            await fetchComments(); // Cập nhật lại danh sách bình luận
+        } catch (error) {
+            console.error("Lỗi khi thực hiện like bình luận:", error);
+        }
+    };
+
+
+    const handleCommentDislike = async (commentId) => {
+        try {
+            const comment = comments.find(c => c.commentid === commentId);
+
+            if (comment.userLike === 0) {
+                // Đã dislike rồi, bấm lại sẽ undo
+                await axiosInstance.delete(`/like-comment/unlike-comment/${commentId}`);
+            } else {
+                // Nếu đang like (userLike === 1), thì xóa like trước
+                if (comment.userLike === 1) {
+                    await axiosInstance.delete(`/like-comment/unlike-comment/${commentId}`);
+                }
+
+                // Thêm dislike mới
+                await axiosInstance.post('/like-comment/like-comment', {
+                    userid: user.userid,
+                    commentid: commentId,
+                    type: 0,
+                });
+            }
+
+            await fetchComments(); // Cập nhật lại danh sách bình luận
+        } catch (error) {
+            console.error("Lỗi khi thực hiện dislike bình luận:", error);
+        }
+    };
+
+
     const handleReport = () => {
         console.log('Video đã được báo cáo.');
     };
@@ -162,11 +229,11 @@ const PlayVideo = () => {
                 <div>
                     <span onClick={handleLike} className={`icon ${userLike === 1 ? 'active' : ''}`}>
                         <img src={like} alt='Thích' />
-                        {video.videolike}
+                        {video.videolike} {/* Hiển thị số lượt like */}
                     </span>
                     <span onClick={handleDislike} className={`icon ${userLike === 0 ? 'active' : ''}`}>
                         <img src={dislike} alt='Không thích' />
-                        {video.videodislike}
+                        {video.videodislike} {/* Hiển thị số lượt dislike */}
                     </span>
                     <span><img src={share} alt='Chia sẻ' />Chia sẻ</span>
                     <span><img src={save} alt='Lưu' />Lưu</span>
@@ -195,9 +262,12 @@ const PlayVideo = () => {
                             <h3>{comment.Account.name} <span>{timeAgo(comment.created_at)}</span></h3>
                             <p>{comment.content}</p>
                             <div className='comment-action'>
-                                <img src={like} alt='Thích' />
-                                <span>244</span>
-                                <img src={dislike} alt='Không thích' />
+                                <span onClick={() => handleCommentLike(comment.commentid)} className={`icon ${comment.userLike === 1 ? 'active' : ''}`}>
+                                    <img src={like} alt='Thích' />
+                                </span>
+                                <span onClick={() => handleCommentDislike(comment.commentid)} className={`icon ${comment.userLike === 0 ? 'active' : ''}`}>
+                                    <img src={dislike} alt='Không thích' />
+                                </span>
                             </div>
                         </div>
                     </div>

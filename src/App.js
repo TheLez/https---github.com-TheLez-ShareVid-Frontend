@@ -5,7 +5,7 @@ import NavBar from './components/NavBar/NavBar';
 import { routes } from './routes';
 
 const App = () => {
-  const [sidebar, setSidebar] = useState(true);
+  const [sidebar, setSidebar] = useState(true); // Mặc định sidebar mở rộng
 
   return (
     <AuthProvider>
@@ -18,9 +18,8 @@ const AppContent = ({ sidebar, setSidebar }) => {
   const { isAuthenticated, userRole } = useAuth();
   const location = useLocation();
 
-  // Tìm route hiện tại để kiểm tra có cần hiển thị NavBar không
   const currentRoute = routes.find(route => location.pathname === route.path);
-  const shouldShowHeader = currentRoute?.isShowHeader && isAuthenticated;
+  const shouldShowHeader = isAuthenticated && (currentRoute?.isShowHeader !== false);
 
   return (
     <>
@@ -31,11 +30,10 @@ const AppContent = ({ sidebar, setSidebar }) => {
             key={path}
             path={path}
             element={
-              // Nếu là /login hoặc /register, không cần kiểm tra xác thực
               (path === '/login' || path === '/register')
                 ? <PageComponent />
                 : (isAuthenticated
-                  ? <PageComponent sidebar={sidebar} />
+                  ? <PageComponent sidebar={sidebar} setSidebar={setSidebar} /> // Truyền setSidebar
                   : <Navigate to="/login" replace />)
             }
           />
