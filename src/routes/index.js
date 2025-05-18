@@ -2,7 +2,11 @@ import Home from '../pages/Home/Home';
 import Login from '../pages/Login/Login'; // Thêm import cho Login
 import Register from '../pages/Register/Register'; // Thêm import cho Register
 import Video from '../pages/Video/Video'; // Thêm import cho Video
-import PlayVideo from '../components/PlayVideo/PlayVideo';
+import Search from '../pages/Search/Search';
+import Account from '../pages/Account/Account';
+import Watched from '../pages/Watched/Watched';
+import Saved from '../pages/Saved/Saved';
+import Liked from '../pages/Liked/Liked';
 
 export const routes = [
     {
@@ -23,6 +27,31 @@ export const routes = [
     {
         path: '/video/:videoId', // Thêm route cho Video
         page: Video,
+        isShowHeader: true // Hoặc false tùy thuộc vào yêu cầu của bạn
+    },
+    {
+        path: '/search', // Thêm route cho Video
+        page: Search,
+        isShowHeader: true // Hoặc false tùy thuộc vào yêu cầu của bạn
+    },
+    {
+        path: '/account/:id', // Thêm route cho Video
+        page: Account,
+        isShowHeader: true // Hoặc false tùy thuộc vào yêu cầu của bạn
+    },
+    {
+        path: '/watched', // Thêm route cho Video
+        page: Watched,
+        isShowHeader: true // Hoặc false tùy thuộc vào yêu cầu của bạn
+    },
+    {
+        path: '/saved', // Thêm route cho Video
+        page: Saved,
+        isShowHeader: true // Hoặc false tùy thuộc vào yêu cầu của bạn
+    },
+    {
+        path: '/liked', // Thêm route cho Video
+        page: Liked,
         isShowHeader: true // Hoặc false tùy thuộc vào yêu cầu của bạn
     }
 ];

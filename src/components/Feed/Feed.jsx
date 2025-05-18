@@ -1,51 +1,79 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import './Feed.scss';
 import { Link } from 'react-router-dom';
 import axiosInstance from '../../utils/axiosInstance';
-import timeAgo from '../../utils/timeAgo'; // Import hàm
+import timeAgo from '../../utils/timeAgo';
 
-const Feed = ({ category }) => {
+const Feed = ({ type, orderByView }) => {
     const [videos, setVideos] = useState([]);
     const [error, setError] = useState(null);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
-    const limit = 50; // Số lượng video trên mỗi trang
+    const [isLoading, setIsLoading] = useState(false);
+    const limit = 20;
 
-    const fetchVideos = async () => {
-        if (!hasMore) return; // Nếu không còn video để tải
+    // Gọi API để lấy danh sách video
+    const fetchVideos = useCallback(async () => {
+        if (isLoading || !hasMore) return;
+
+        setIsLoading(true);
         try {
-            const res = await axiosInstance.get(`/video/get-all?page=${page}&limit=${limit}`);
+            const params = new URLSearchParams({
+                page,
+                limit,
+                ...(type && { type }),
+                ...(orderByView && { orderByView: true })
+            });
 
-            if (res.data.data.length > 0) {
-                setVideos((prev) => {
-                    // Chỉ thêm video mới nếu chưa có trong danh sách
-                    const newVideos = res.data.data.filter(video => !prev.some(v => v.videoid === video.videoid));
+            const res = await axiosInstance.get(`/video/get-all?${params.toString()}`);
+            const fetched = res.data?.data || [];
+
+            if (fetched.length > 0) {
+                setVideos(prev => {
+                    const existingIds = new Set(prev.map(v => v.videoid));
+                    const newVideos = fetched.filter(v => !existingIds.has(v.videoid));
                     return [...prev, ...newVideos];
                 });
-                setPage((prev) => prev + 1); // Tăng trang cho lần tải tiếp theo
+                setPage(prev => prev + 1);
             } else {
-                setHasMore(false); // Không còn video để tải
+                setHasMore(false);
             }
         } catch (err) {
-            console.error('Lỗi khi lấy danh sách video:', err);
+            console.error('❌ Lỗi khi lấy danh sách video:', err);
             setError('Không thể tải danh sách video.');
+        } finally {
+            setIsLoading(false);
         }
-    };
+    }, [page, hasMore, isLoading, type, orderByView]);
 
+    // Reset danh sách khi thay đổi filter
     useEffect(() => {
-        fetchVideos(); // Gọi hàm ở đây
-    }, [page]);
+        setVideos([]);
+        setPage(1);
+        setHasMore(true);
+    }, [type, orderByView]);
 
-    // Hàm xử lý cuộn trang
-    const handleScroll = () => {
-        if (window.innerHeight + document.documentElement.scrollTop !== document.documentElement.offsetHeight || error) return;
-        fetchVideos();
-    };
-
+    // Gọi fetch khi reset filter
     useEffect(() => {
+        if (page === 1 && hasMore) {
+            fetchVideos();
+        }
+    }, [page, fetchVideos]);
+
+    // Infinite scroll handler
+    useEffect(() => {
+        const handleScroll = () => {
+            if (
+                window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 100 &&
+                hasMore && !isLoading
+            ) {
+                fetchVideos();
+            }
+        };
+
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
-    }, [error]);
+    }, [fetchVideos, hasMore, isLoading]);
 
     return (
         <div className='feed'>
@@ -55,15 +83,17 @@ const Feed = ({ category }) => {
                 <Link
                     to={`/video/${video.videoid}`}
                     className='card'
-                    key={video.videoid} // Đảm bảo videoid là duy nhất
+                    key={video.videoid}
                 >
                     <img src={video.thumbnail} alt={video.title} />
                     <h2>{video.title}</h2>
                     <h3>{video.Account?.name || 'Không rõ người đăng'}</h3>
-                    <p>{video.videoview} lượt xem &bull; {timeAgo(video.created_at)}</p>
+                    <p>{video.videoview} lượt xem • {timeAgo(video.created_at)}</p>
                 </Link>
             ))}
-            {/* Xóa thông báo không còn video */}
+
+            {isLoading && <p style={{ textAlign: 'center' }}>⏳ Đang tải thêm...</p>}
+            {!hasMore && <p style={{ textAlign: 'center', marginTop: '1rem' }}>🎉 Đã tải hết video!</p>}
         </div>
     );
 };

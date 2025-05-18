@@ -7,7 +7,7 @@ import upload_icon from '../../assets/images/upload.png';
 import blogs_icon from '../../assets/images/blogs.png';
 import notification_icon from '../../assets/images/notification.png';
 import { useAuth } from '../../authContext';
-import axiosInstance from '../../utils/axiosInstance'; // 👉 thay vì axios thường
+import axiosInstance from '../../utils/axiosInstance';
 import { useNavigate } from 'react-router-dom';
 
 const NavBar = ({ setSidebar }) => {
@@ -15,6 +15,7 @@ const NavBar = ({ setSidebar }) => {
     const [accountInfo, setAccountInfo] = useState(null);
     const [error, setError] = useState(null);
     const [showMenu, setShowMenu] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -40,24 +41,55 @@ const NavBar = ({ setSidebar }) => {
         navigate('/login');
     };
 
+    const handleSearch = () => {
+        if (searchTerm) {
+            navigate(`/search?query=${encodeURIComponent(searchTerm)}`);
+        }
+    };
+
     return (
         <nav className="flex-div">
             <div className="nav-left flex-div">
                 <img className='menu-icon' onClick={() => setSidebar(prev => !prev)} src={menu_icon} alt="Menu" />
-                <img className='logo' src={logo} alt="Logo" />
+                <img
+                    className='logo'
+                    src={logo}
+                    alt="Logo"
+                    onClick={() => navigate('/')} // Điều hướng về trang home
+                />
             </div>
 
             <div className="nav-middle flex-div">
                 <div className='search-box flex-div'>
-                    <input type='text' placeholder='Tìm kiếm...' />
-                    <img src={search_icon} alt="Search" />
+                    <input
+                        type='text'
+                        placeholder='Tìm kiếm...'
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)} // Cập nhật giá trị tìm kiếm
+                    />
+                    <img
+                        src={search_icon}
+                        alt="Search"
+                        onClick={handleSearch} // Điều hướng khi bấm nút tìm kiếm
+                    />
                 </div>
             </div>
 
             <div className="nav-right flex-div">
-                <img src={upload_icon} alt="Upload" />
-                <img src={blogs_icon} alt="Blogs" />
-                <img src={notification_icon} alt="Notifications" />
+                <img
+                    src={upload_icon}
+                    alt="Upload"
+                    onClick={() => navigate('/upload')} // Điều hướng đến trang upload
+                />
+                <img
+                    src={blogs_icon}
+                    alt="Record"
+                    onClick={() => navigate('/record')} // Điều hướng đến trang blogs
+                />
+                <img
+                    src={notification_icon}
+                    alt="Notifications"
+                />
 
                 <div className="user-menu-container" style={{ position: 'relative' }}>
                     {accountInfo ? (

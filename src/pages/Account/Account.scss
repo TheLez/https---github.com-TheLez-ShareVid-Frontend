@@ -1,0 +1,61 @@
+.account-page {
+    padding: 20px;
+    max-width: 80%;
+    margin: auto;
+
+    .account-info {
+        text-align: center;
+        margin-bottom: 30px;
+
+        .avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        h2 {
+            margin: 10px 0 5px;
+        }
+
+        p {
+            margin: 3px 0;
+        }
+    }
+
+    .video-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); // giống feed
+        grid-column-gap: 16px;
+        grid-row-gap: 30px;
+        margin-top: 15px;
+
+        .video-card {
+            cursor: pointer;
+
+            img {
+                width: 100%;
+                aspect-ratio: 16 / 9;
+                object-fit: cover;
+                border-radius: 5px;
+            }
+
+            .video-details {
+                padding: 6px 0;
+
+                h4 {
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: #000;
+                    margin: 5px 0;
+                }
+
+                p {
+                    font-size: 14px;
+                    color: #555;
+                    margin: 6px 0 0;
+                }
+            }
+        }
+    }
+}
