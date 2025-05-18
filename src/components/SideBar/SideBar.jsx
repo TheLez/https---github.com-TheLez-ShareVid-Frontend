@@ -85,7 +85,7 @@ const SideBar = ({ sidebar, activeCategory, setActiveCategory, setFeedParams }) 
             </div>
 
             <div className='subscribed-list'>
-                <h3>Kênh đăng ký</h3>
+                <h3>Kênh nổi bật</h3>
                 {subscribedAccounts.length > 0 ? (
                     subscribedAccounts.map(account => (
                         <Link to={`/account/${account.userid}`} key={account.userid} className='side-link'>

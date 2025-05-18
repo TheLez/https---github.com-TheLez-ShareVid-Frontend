@@ -1,71 +1,19 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import './Recommended.scss';
 import axiosInstance from '../../utils/axiosInstance';
 import { useNavigate } from 'react-router-dom';
 
 const LIMIT = 20;
 
-const Recommended = ({ videoId }) => {
-    const [videoType, setVideoType] = useState(null);
+const Recommended = ({ videoId, videoType }) => {
     const [videos, setVideos] = useState([]);
     const [page, setPage] = useState(1);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [hasMore, setHasMore] = useState(true);
     const navigate = useNavigate();
-    const videoTypeRef = useRef(null);
 
-    console.log('Recommended component mounted', { videoId });
-    console.log('axiosInstance config:', axiosInstance.defaults);
-
-    useEffect(() => {
-        console.log('useEffect 1 bắt đầu', { videoId });
-        if (!videoId) {
-            console.warn('⚠️ videoId không hợp lệ, dừng fetch');
-            setLoading(false);
-            return;
-        }
-
-        const fetchVideoType = async (retryCount = 0, maxRetries = 3) => {
-            if (retryCount >= maxRetries) {
-                console.warn('⚠️ Max retries reached for fetchVideoType, stopping');
-                setError('Không thể tải thông tin video sau nhiều lần thử.');
-                setLoading(false);
-                return;
-            }
-
-            try {
-                console.log('▶️ Fetch video by ID:', videoId, `retry=${retryCount}`);
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000);
-                const res = await axiosInstance.get(`/video/${videoId}`, { signal: controller.signal });
-                clearTimeout(timeoutId);
-                console.log('API response fetchVideoType:', res.data);
-                const { videotype } = res.data;
-                console.log('✅ Video type:', videotype);
-                if (videotype === undefined || videotype === null) {
-                    console.warn('⚠️ No videoType returned, stopping fetch');
-                    setError('Không có loại video hợp lệ.');
-                    setLoading(false);
-                    return;
-                }
-                setVideoType(videotype);
-                videoTypeRef.current = videotype;
-                console.log('Đã gọi setVideoType với:', videotype, 'videoTypeRef:', videoTypeRef.current);
-                setPage(1);
-                setVideos([]);
-                setHasMore(true);
-            } catch (err) {
-                console.error('❌ Error fetching video by ID:', err);
-                console.warn(`⚠️ Retrying fetchVideoType... (${retryCount + 1}/${maxRetries})`);
-                setTimeout(() => fetchVideoType(retryCount + 1, maxRetries), 1000);
-            } finally {
-                console.log('useEffect 1 kết thúc');
-            }
-        };
-
-        fetchVideoType();
-    }, [videoId]);
+    console.log('Recommended component mounted', { videoId, videoType });
 
     const fetchRecommendations = useCallback(async (retryCount = 0, maxRetries = 3) => {
         if (retryCount >= maxRetries) {
@@ -114,16 +62,17 @@ const Recommended = ({ videoId }) => {
     }, [videoType, page, videoId]);
 
     useEffect(() => {
-        console.log('useEffect 2 kiểm tra điều kiện:', { videoType, videoId, hasMore, page });
+        console.log('useEffect kiểm tra điều kiện:', { videoType, videoId, hasMore, page });
         if (videoType === null || videoType === undefined || !videoId || !hasMore) {
-            console.warn('⚠️ useEffect 2 không chạy do:', {
+            console.warn('⚠️ useEffect không chạy do:', {
                 videoTypeIsNull: videoType === null || videoType === undefined,
                 videoIdIsNull: !videoId,
                 hasMoreIsFalse: !hasMore
             });
+            setLoading(false);
             return;
         }
-        console.log('useEffect 2 bắt đầu');
+        console.log('useEffect bắt đầu');
         fetchRecommendations();
     }, [fetchRecommendations, videoType, page, videoId, hasMore]);
 
@@ -193,4 +142,6 @@ const Recommended = ({ videoId }) => {
     );
 };
 
-export default React.memo(Recommended, (prevProps, nextProps) => prevProps.videoId === nextProps.videoId);
+export default React.memo(Recommended, (prevProps, nextProps) =>
+    prevProps.videoId === nextProps.videoId && prevProps.videoType === nextProps.videoType
+);

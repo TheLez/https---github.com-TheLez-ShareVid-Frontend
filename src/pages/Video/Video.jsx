@@ -9,6 +9,12 @@ const Video = ({ sidebar, setSidebar }) => {
     const { videoId } = useParams(); // Lấy videoId từ URL
     const [category, setCategory] = useState(0);
     const [activeCategory, setActiveCategory] = useState(0); // Thêm state cho activeCategory
+    const [videoType, setVideoType] = useState(null); // State để lưu videoType
+
+    // Callback để nhận videoType từ PlayVideo
+    const handleVideoTypeChange = (type) => {
+        setVideoType(type);
+    };
 
     useEffect(() => {
         setSidebar(false); // Đặt sidebar thành thu nhỏ khi load trang
@@ -25,8 +31,14 @@ const Video = ({ sidebar, setSidebar }) => {
                 setCategory={setCategory}
             />
             <div className={`play-container ${sidebar ? '' : 'large-container'}`}>
-                <PlayVideo videoId={videoId} /> {/* Truyền videoId vào PlayVideo */}
-                <Recommended videoId={videoId} /> {/* Truyền videoId vào Recommended */}
+                <PlayVideo
+                    videoId={videoId}
+                    onVideoTypeChange={handleVideoTypeChange} // Truyền callback vào PlayVideo
+                />
+                <Recommended
+                    videoId={videoId}
+                    videoType={videoType} // Truyền videoType vào Recommended
+                />
             </div>
         </div>
     );

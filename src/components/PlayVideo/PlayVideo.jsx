@@ -10,7 +10,7 @@ import timeAgo from '../../utils/timeAgo';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../../authContext';
 
-const PlayVideo = () => {
+const PlayVideo = ({ onVideoTypeChange }) => {
     const { user } = useAuth();
     const { videoId } = useParams();
 
@@ -20,6 +20,8 @@ const PlayVideo = () => {
     const [error, setError] = useState(null);
     const [newComment, setNewComment] = useState('');
     const [userLike, setUserLike] = useState(null);
+    const [isSubscribed, setIsSubscribed] = useState(false); // Trạng thái đăng ký
+    const [isSaved, setIsSaved] = useState(false); // Trạng thái lưu video
 
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
@@ -36,8 +38,18 @@ const PlayVideo = () => {
                 console.log('API response fetchVideo:', response.data);
                 if (response.status === 200) {
                     setVideo(response.data);
+                    const videoType = response.data.videoType || response.data.videotype;
+                    console.log('✅ videoType:', videoType);
+                    if (videoType === undefined || videoType === null) {
+                        console.warn('⚠️ videoType không tồn tại trong response.data');
+                        setError('Không có loại video hợp lệ.');
+                    } else {
+                        onVideoTypeChange(videoType);
+                    }
                     await updateViewCount();
                     await checkUserLike();
+                    await checkSubscribe(response.data.Account.userid);
+                    await checkSaved();
                 } else {
                     setError("Video không tồn tại.");
                 }
@@ -51,13 +63,77 @@ const PlayVideo = () => {
         };
 
         fetchVideo();
-    }, [videoId]);
+    }, [videoId, onVideoTypeChange]);
 
     const updateViewCount = async () => {
         try {
             await axiosInstance.post(`/video/${videoId}/increment-view`);
         } catch (error) {
             console.error("Lỗi khi cập nhật lượt xem:", error);
+        }
+    };
+
+    const checkSubscribe = async (useridsub) => {
+        try {
+            console.log('🔍 Kiểm tra trạng thái đăng ký:', useridsub);
+            const response = await axiosInstance.get(`/subscribe/subscribed/${useridsub}`);
+            console.log('API response checkSubscribe:', response.data);
+            setIsSubscribed(!!response.data.isSubscribed); // Giả định API trả về { isSubscribed: true/false }
+        } catch (error) {
+            console.error("Lỗi khi kiểm tra trạng thái đăng ký:", error);
+            setIsSubscribed(false);
+        }
+    };
+
+    const handleSubscribe = async () => {
+        try {
+            if (isSubscribed) {
+                console.log('🔔 Hủy đăng ký:', video.Account.userid);
+                await axiosInstance.delete(`/subscribe/delete-subscribe/${video.Account.userid}`);
+                setIsSubscribed(false);
+                setVideo(prev => ({ ...prev, Account: { ...prev.Account, subscription: prev.Account.subscription - 1 } }));
+            } else {
+                console.log('🔔 Đăng ký:', video.Account.userid);
+                await axiosInstance.post(`/subscribe/subscribe`, {
+                    useridsub: video.Account.userid,
+                    userid: user.userid,
+                });
+                setIsSubscribed(true);
+                setVideo(prev => ({ ...prev, Account: { ...prev.Account, subscription: prev.Account.subscription + 1 } }));
+            }
+        } catch (error) {
+            console.error("Lỗi khi thực hiện đăng ký/hủy đăng ký:", error);
+        }
+    };
+
+    const checkSaved = async () => {
+        try {
+            console.log('🔍 Kiểm tra trạng thái lưu video:', videoId);
+            const response = await axiosInstance.get(`/save-video/saved/${videoId}`);
+            console.log('API response checkSaved:', response.data);
+            setIsSaved(!!response.data.isSaved); // Giả định API trả về { isSaved: true/false }
+        } catch (error) {
+            console.error("Lỗi khi kiểm tra trạng thái lưu video:", error);
+            setIsSaved(false);
+        }
+    };
+
+    const handleSave = async () => {
+        try {
+            if (isSaved) {
+                console.log('💾 Hủy lưu video:', videoId);
+                await axiosInstance.delete(`/save-video/remove/${videoId}`);
+                setIsSaved(false);
+            } else {
+                console.log('💾 Lưu video:', videoId);
+                await axiosInstance.post(`/save-video/save`, {
+                    videoid: videoId,
+                    userid: user.userid,
+                });
+                setIsSaved(true);
+            }
+        } catch (error) {
+            console.error("Lỗi khi thực hiện lưu/hủy lưu video:", error);
         }
     };
 
@@ -293,7 +369,10 @@ const PlayVideo = () => {
                         {video.videodislike}
                     </span>
                     <span><img src={share} alt='Chia sẻ' />Chia sẻ</span>
-                    <span><img src={save} alt='Lưu' />Lưu</span>
+                    <span onClick={handleSave} className={`icon ${isSaved ? 'saved' : ''}`}>
+                        <img src={save} alt='Lưu' />
+                        {isSaved ? 'Đã lưu' : 'Lưu'}
+                    </span>
                     <span onClick={handleReport} className='report-button'>
                         <img src={tech} alt='Báo cáo' />Báo cáo
                     </span>
@@ -308,7 +387,12 @@ const PlayVideo = () => {
                         <span>{video.Account.subscription} người đăng ký</span>
                     </div>
                 </Link>
-                <button>Đăng ký</button>
+                <button
+                    onClick={handleSubscribe}
+                    className={`subscribe-button ${isSubscribed ? 'subscribed' : ''}`}
+                >
+                    {isSubscribed ? 'Đã đăng ký' : 'Đăng ký'}
+                </button>
             </div>
             <div className='vid-description'>
                 <p>{video.videodescribe || "Không có mô tả."}</p>
