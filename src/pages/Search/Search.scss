@@ -1,7 +1,7 @@
 .search-page {
     padding: 20px;
-    max-width: 80%;
-    margin: 0 auto;
+    max-width: 90%;
+    margin: auto;
 }
 
 .filter-buttons {
@@ -73,7 +73,6 @@
         overflow: hidden;
         text-overflow: ellipsis;
         display: -webkit-box;
-        -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
     }
 

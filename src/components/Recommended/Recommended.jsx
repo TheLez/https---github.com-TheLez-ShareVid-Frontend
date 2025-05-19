@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import './Recommended.scss';
 import axiosInstance from '../../utils/axiosInstance';
 import { useNavigate } from 'react-router-dom';
+import timeAgo from '../../utils/timeAgo';
 
 const LIMIT = 20;
 
@@ -130,7 +131,7 @@ const Recommended = ({ videoId, videoType }) => {
                         <div className='vid-info'>
                             <h4>{video.title}</h4>
                             <p>{video.Account.name}</p>
-                            <p>{video.videoview} lượt xem</p>
+                            <p>{video.videoview} lượt xem • {timeAgo(video.created_at)}</p>
                         </div>
                     </div>
                 ))

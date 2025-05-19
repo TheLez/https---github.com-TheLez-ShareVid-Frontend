@@ -6,7 +6,8 @@ import Search from '../pages/Search/Search';
 import Account from '../pages/Account/Account';
 import Watched from '../pages/Watched/Watched';
 import Saved from '../pages/Saved/Saved';
-import Liked from '../pages/Liked/Liked';
+import LikeVideo from '../pages/LikeVideo/LikeVideo';
+import SubscribeList from '../pages/SubscribeList/SubscribeList';
 
 export const routes = [
     {
@@ -51,7 +52,12 @@ export const routes = [
     },
     {
         path: '/liked', // Thêm route cho Video
-        page: Liked,
+        page: LikeVideo,
+        isShowHeader: true // Hoặc false tùy thuộc vào yêu cầu của bạn
+    },
+    {
+        path: '/subscribed', // Thêm route cho Video
+        page: SubscribeList,
         isShowHeader: true // Hoặc false tùy thuộc vào yêu cầu của bạn
     }
 ];

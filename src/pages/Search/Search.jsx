@@ -3,10 +3,11 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import axiosInstance from '../../utils/axiosInstance';
 import './Search.scss';
 import { useAuth } from '../../authContext';
+import SideBar from '../../components/SideBar/SideBar';
 
 const LIMIT = 20;
 
-const Search = () => {
+const Search = ({ sidebar, setSidebar }) => {
     const { user } = useAuth();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
@@ -20,8 +21,13 @@ const Search = () => {
     const [sortBy, setSortBy] = useState('created_at'); // Gần đây (mặc định) hoặc videoview (Thịnh hành)
     const [viewedFilter, setViewedFilter] = useState(null); // true (Đã xem), false (Chưa xem), null (Tất cả)
     const [isChannelSearch, setIsChannelSearch] = useState(false); // Tìm kiếm kênh hay video
-
+    const [category, setCategory] = useState(0);
+    const [activeCategory, setActiveCategory] = useState(0);
     const observer = useRef();
+
+    useEffect(() => {
+        setSidebar(true); // hiện SideBar khi vào trang này
+    }, [setSidebar]);
 
     const fetchResults = useCallback(async (currentPage = 1) => {
         if (!query) {
@@ -149,95 +155,107 @@ const Search = () => {
     if (!query) return <div>Vui lòng nhập từ khóa tìm kiếm.</div>;
 
     return (
-        <div className="search-page">
-            <div className="filter-buttons">
-                <button
-                    className={`filter-button ${sortBy === 'created_at' && !isChannelSearch ? 'active' : ''}`}
-                    onClick={handleSortByRecent}
-                    disabled={isChannelSearch}
-                >
-                    Gần đây
-                </button>
-                <button
-                    className={`filter-button ${isChannelSearch ? 'active' : ''}`}
-                    onClick={handleChannelSearch}
-                >
-                    Kênh
-                </button>
-                <button
-                    className={`filter-button ${sortBy === 'videoview' && !isChannelSearch ? 'active' : ''}`}
-                    onClick={handleSortByTrending}
-                    disabled={isChannelSearch}
-                >
-                    Thịnh hành
-                </button>
-                <button
-                    className={`filter-button ${viewedFilter === false && !isChannelSearch ? 'active' : ''}`}
-                    onClick={() => handleViewedFilter(false)}
-                    disabled={isChannelSearch}
-                >
-                    Chưa xem
-                </button>
-                <button
-                    className={`filter-button ${viewedFilter === true && !isChannelSearch ? 'active' : ''}`}
-                    onClick={() => handleViewedFilter(true)}
-                    disabled={isChannelSearch}
-                >
-                    Đã xem
-                </button>
-            </div>
-            <div className="search-results">
-                {results.length === 0 && !loading && <p>Không tìm thấy kết quả.</p>}
-                {!isChannelSearch ? (
-                    results.map((video, index) => (
-                        <div
-                            key={video.videoid}
-                            className="video-item"
-                            onClick={() => navigate(`/video/${video.videoid}`)}
-                            ref={index === results.length - 1 ? lastResultRef : null}
+        <>
+            <SideBar
+                sidebar={sidebar}
+                activeCategory={activeCategory} // Truyền activeCategory
+                setActiveCategory={setActiveCategory} // Truyền setActiveCategory
+                setFeedParams={() => { }} // Có thể để hàm rỗng nếu không dùng
+                category={category}
+                setCategory={setCategory}
+            />
+            <div className={`container ${sidebar ? '' : 'large-container'}`}>
+                <div className="search-page">
+                    <div className="filter-buttons">
+                        <button
+                            className={`filter-button ${sortBy === 'created_at' && !isChannelSearch ? 'active' : ''}`}
+                            onClick={handleSortByRecent}
+                            disabled={isChannelSearch}
                         >
-                            <img
-                                src={video.thumbnail}
-                                alt={video.title}
-                                onError={(e) => {
-                                    e.target.onerror = null;
-                                    e.target.src = 'https://via.placeholder.com/150';
-                                }}
-                            />
-                            <div className="video-info">
-                                <h4>{video.title}</h4>
-                                <p>{video.Account.name}</p>
-                                <p>{video.videoview} lượt xem</p>
-                            </div>
-                        </div>
-                    ))
-                ) : (
-                    results.map((channel, index) => (
-                        <div
-                            key={channel.userid}
-                            className="channel-item"
-                            onClick={() => navigate(`/account/${channel.userid}`)}
-                            ref={index === results.length - 1 ? lastResultRef : null}
+                            Gần đây
+                        </button>
+                        <button
+                            className={`filter-button ${isChannelSearch ? 'active' : ''}`}
+                            onClick={handleChannelSearch}
                         >
-                            <img
-                                src={channel.avatar}
-                                alt={channel.name}
-                                onError={(e) => {
-                                    e.target.onerror = null;
-                                    e.target.src = 'https://via.placeholder.com/50';
-                                }}
-                            />
-                            <div className="channel-info">
-                                <h4>{channel.name}</h4>
-                                <p>{channel.subscription} người đăng ký</p>
-                            </div>
-                        </div>
-                    ))
-                )}
-                {loading && <p>Đang tải kết quả...</p>}
-                {!hasMore && results.length > 0 && <p>Không còn kết quả.</p>}
+                            Kênh
+                        </button>
+                        <button
+                            className={`filter-button ${sortBy === 'videoview' && !isChannelSearch ? 'active' : ''}`}
+                            onClick={handleSortByTrending}
+                            disabled={isChannelSearch}
+                        >
+                            Thịnh hành
+                        </button>
+                        <button
+                            className={`filter-button ${viewedFilter === false && !isChannelSearch ? 'active' : ''}`}
+                            onClick={() => handleViewedFilter(false)}
+                            disabled={isChannelSearch}
+                        >
+                            Chưa xem
+                        </button>
+                        <button
+                            className={`filter-button ${viewedFilter === true && !isChannelSearch ? 'active' : ''}`}
+                            onClick={() => handleViewedFilter(true)}
+                            disabled={isChannelSearch}
+                        >
+                            Đã xem
+                        </button>
+                    </div>
+                    <div className="search-results">
+                        {results.length === 0 && !loading && <p>Không tìm thấy kết quả.</p>}
+                        {!isChannelSearch ? (
+                            results.map((video, index) => (
+                                <div
+                                    key={video.videoid}
+                                    className="video-item"
+                                    onClick={() => navigate(`/video/${video.videoid}`)}
+                                    ref={index === results.length - 1 ? lastResultRef : null}
+                                >
+                                    <img
+                                        src={video.thumbnail}
+                                        alt={video.title}
+                                        onError={(e) => {
+                                            e.target.onerror = null;
+                                            e.target.src = 'https://via.placeholder.com/150';
+                                        }}
+                                    />
+                                    <div className="video-info">
+                                        <h4>{video.title}</h4>
+                                        <p>{video.Account.name}</p>
+                                        <p>{video.videoview} lượt xem</p>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            results.map((channel, index) => (
+                                <div
+                                    key={channel.userid}
+                                    className="channel-item"
+                                    onClick={() => navigate(`/account/${channel.userid}`)}
+                                    ref={index === results.length - 1 ? lastResultRef : null}
+                                >
+                                    <img
+                                        src={channel.avatar}
+                                        alt={channel.name}
+                                        onError={(e) => {
+                                            e.target.onerror = null;
+                                            e.target.src = 'https://via.placeholder.com/50';
+                                        }}
+                                    />
+                                    <div className="channel-info">
+                                        <h4>{channel.name}</h4>
+                                        <p>{channel.subscription} người đăng ký</p>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                        {loading && <p>Đang tải kết quả...</p>}
+                    </div>
+                </div>
             </div>
-        </div>
+        </>
+
     );
 };
 

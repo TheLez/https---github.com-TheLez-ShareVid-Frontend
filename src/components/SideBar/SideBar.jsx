@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // Import Link và useNavigate
+import { Link, useNavigate } from 'react-router-dom';
 import axiosInstance from '../../utils/axiosInstance';
 import './SideBar.scss';
 import home from '../../assets/images/home.png';
@@ -15,7 +15,7 @@ import sports from '../../assets/images/sports.png';
 
 const SideBar = ({ sidebar, activeCategory, setActiveCategory, setFeedParams }) => {
     const [subscribedAccounts, setSubscribedAccounts] = useState([]);
-    const navigate = useNavigate(); // Khai báo useNavigate
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchSubscribedAccounts = async () => {
@@ -39,26 +39,31 @@ const SideBar = ({ sidebar, activeCategory, setActiveCategory, setFeedParams }) 
 
         // Điều hướng đến các trang dựa trên category
         switch (category) {
+            case 6:
+                navigate('/subscribed'); // Điều hướng đến trang Kênh đăng ký
+                setActiveCategory(category);
+                return;
             case 7:
-                navigate('/watched'); // Video đã xem
+                navigate('/watched');
+                setActiveCategory(category);
                 return;
             case 8:
-                navigate('/saved'); // Danh sách lưu
+                navigate('/saved');
+                setActiveCategory(category);
                 return;
             case 9:
-                navigate('/liked'); // Video đã thích
+                navigate('/liked');
+                setActiveCategory(category);
                 return;
             default:
-                // Kiểm tra nếu đang ở trang khác
-                if (window.location.pathname !== '/') {
-                    navigate('/'); // Điều hướng về trang Home
-                }
+                // Điều hướng về trang chủ với state
+                navigate('/', {
+                    state: { category, type, orderByView }
+                });
+                setActiveCategory(category);
+                setFeedParams({ type, orderByView });
                 break;
         }
-
-        // Cập nhật các thông số feed
-        setActiveCategory(category);
-        setFeedParams({ type, orderByView });
     };
 
     return (

@@ -1,4 +1,4 @@
-.saved-videos-page {
+.liked-videos-page {
     padding: 20px;
     max-width: 90%;
     margin: 0 auto;
@@ -44,13 +44,10 @@
     gap: 5px;
 
     h4 {
-        margin: 0;
         font-size: 17px;
-        font-weight: 500;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        display: -webkit-box;
-        -webkit-box-orient: vertical;
+                    font-weight: 600;
+                    color: #000;
+                    margin: 5px 0;
     }
 
     p {
@@ -62,7 +59,7 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-    .saved-videos-page {
+    .liked-videos-page {
         max-width: 100%;
         padding: 10px;
     }

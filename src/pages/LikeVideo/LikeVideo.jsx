@@ -3,50 +3,51 @@ import SideBar from '../../components/SideBar/SideBar';
 import axiosInstance from '../../utils/axiosInstance';
 import timeAgo from '../../utils/timeAgo';
 import { Link } from 'react-router-dom';
-import './Saved.scss';
+import './LikeVideo.scss';
 
-const Saved = ({ sidebar, setSidebar }) => {
+const LikeVideo = ({ sidebar, setSidebar }) => {
     const [videos, setVideos] = useState([]);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [category, setCategory] = useState(0);
-    const [activeCategory, setActiveCategory] = useState(8);
+    const [activeCategory, setActiveCategory] = useState(9);
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(false);
     const LIMIT = 20;
 
     // useEffect(() => {
-    //     setSidebar(true); // Hiện SideBar
+    //     setSidebar(true); // Hiện SideBar khi vào trang
     // }, [setSidebar]);
 
     useEffect(() => {
-        const fetchSavedVideos = async () => {
-            if (loading || !hasMore) return;
+        const fetchLikedVideos = async () => {
+            if (loading || !hasMore) return; // Ngăn gọi API khi đang tải hoặc hết dữ liệu
 
             setLoading(true);
             try {
-                const response = await axiosInstance.get('/save-video/get-all', {
+                const response = await axiosInstance.get('/likevideo/liked', {
                     params: { page, limit: LIMIT },
                 });
 
+                // Lọc trùng lặp videoid
                 const newVideos = response.data.data;
                 setVideos(prev => {
-                    const existingIds = new Set(prev.map(v => v.Video.videoid));
-                    const uniqueNewVideos = newVideos.filter(v => !existingIds.has(v.Video.videoid));
+                    const existingIds = new Set(prev.map(v => v.videoid));
+                    const uniqueNewVideos = newVideos.filter(v => !existingIds.has(v.videoid));
                     return [...prev, ...uniqueNewVideos];
                 });
 
                 if (newVideos.length < LIMIT) setHasMore(false);
                 setError(null);
             } catch (err) {
-                console.error('Error fetching saved videos:', err);
-                setError(err.response?.data?.message || 'Không thể tải video đã lưu.');
+                console.error('Error fetching liked videos:', err);
+                setError(err.response?.data?.error || 'Không thể tải video đã thích.');
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchSavedVideos();
+        fetchLikedVideos();
     }, [page, LIMIT]);
 
     // Reset videos khi page quay về 1
@@ -83,29 +84,22 @@ const Saved = ({ sidebar, setSidebar }) => {
                 setCategory={setCategory}
             />
             <div className={`container ${sidebar ? '' : 'large-container'}`}>
-                <div className="saved-videos-page">
-                    <h2>Video đã lưu</h2>
+                <div className="liked-videos-page">
+                    <h2>Video đã thích</h2>
                     {error && <p className="error">{error}</p>}
                     {loading && videos.length === 0 ? (
                         <p>Đang tải...</p>
                     ) : videos.length === 0 && !error ? (
-                        <p>Không có video nào đã lưu.</p>
+                        <p>Không có video nào đã thích.</p>
                     ) : (
                         <div className="video-list">
                             {videos.map(video => (
-                                <Link
-                                    to={`/video/${video.Video.videoid}`}
-                                    key={video.Video.videoid}
-                                    className="video-card"
-                                >
-                                    <img src={video.Video.thumbnail} alt={video.Video.title} />
+                                <Link to={`/video/${video.videoid}`} key={video.videoid} className="video-card">
+                                    <img src={video.thumbnail} alt={video.title} />
                                     <div className="video-details">
-                                        <h4>{video.Video.title}</h4>
-                                        <p>{video.Video.Account.name}</p>
-                                        <p>
-                                            {video.Video.videoview} lượt xem •{' '}
-                                            {timeAgo(video.Video.created_at)}
-                                        </p>
+                                        <h4>{video.title}</h4>
+                                        <p>{video.Account.name}</p>
+                                        <p>{video.videoview} lượt xem • {timeAgo(video.created_at)}</p>
                                     </div>
                                 </Link>
                             ))}
@@ -118,4 +112,4 @@ const Saved = ({ sidebar, setSidebar }) => {
     );
 };
 
-export default Saved;
+export default LikeVideo;
