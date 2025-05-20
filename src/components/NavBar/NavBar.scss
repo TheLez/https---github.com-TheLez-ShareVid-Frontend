@@ -35,17 +35,22 @@ nav {
   width: 15px;
 }
 
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 22px; /* Tăng gap để các icon cách xa hơn */
+}
+
 .nav-right img {
   width: 25px;
-  margin-right: 25px;
 }
 
 .nav-right .user-icon {
-  width: 35px; /* Kích thước hình ảnh */
-  height: 35px; /* Đảm bảo chiều cao đồng nhất */
-  border-radius: 50%; /* Hình tròn */
-  object-fit: cover; /* Đảm bảo ảnh không bị méo */
-  display: inline-block; /* Đảm bảo hiển thị đúng */
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: inline-block;
 }
 
 .dropdown-menu {
@@ -56,4 +61,29 @@ nav {
 
 .dropdown-menu button:hover {
   background-color: #f2f2f2;
+}
+
+.notification-container {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  background-color: red;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  border-radius: 50%;
+  min-width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
+  z-index: 11;
 }

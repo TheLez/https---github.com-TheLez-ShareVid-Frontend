@@ -103,9 +103,9 @@ const SubscribeList = ({ sidebar, setSidebar }) => {
                         </div>
                     )}
                     {isLoading && <p style={{ textAlign: 'center' }}>⏳ Đang tải thêm...</p>}
-                    {!hasMore && subscriptions.length > 0 && (
+                    {/* {!hasMore && subscriptions.length > 0 && (
                         <p style={{ textAlign: 'center', marginTop: '1rem' }}>🎉 Đã tải hết danh sách!</p>
-                    )}
+                    )} */}
                 </div>
             </div>
         </>

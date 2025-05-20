@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 const NavBar = ({ setSidebar }) => {
     const { user, logout } = useAuth();
     const [accountInfo, setAccountInfo] = useState(null);
+    const [notificationCount, setNotificationCount] = useState(0);
     const [error, setError] = useState(null);
     const [showMenu, setShowMenu] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -31,7 +32,22 @@ const NavBar = ({ setSidebar }) => {
                 }
             }
         };
+
+        const fetchNotificationCount = async () => {
+            if (user && user.id) {
+                try {
+                    console.log(`Fetching notification count for userid: ${user.id}`);
+                    const response = await axiosInstance.get('/notification/count');
+                    setNotificationCount(response.data.data.count || 0);
+                    console.log('Notification count:', response.data.data.count);
+                } catch (error) {
+                    console.error('Error fetching notification count:', error);
+                }
+            }
+        };
+
         fetchAccountInfo();
+        fetchNotificationCount();
     }, [user]);
 
     const handleLogout = () => {
@@ -55,7 +71,7 @@ const NavBar = ({ setSidebar }) => {
                     className='logo'
                     src={logo}
                     alt="Logo"
-                    onClick={() => navigate('/')} // Điều hướng về trang home
+                    onClick={() => navigate('/')}
                 />
             </div>
 
@@ -65,12 +81,12 @@ const NavBar = ({ setSidebar }) => {
                         type='text'
                         placeholder='Tìm kiếm...'
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)} // Cập nhật giá trị tìm kiếm
+                        onChange={(e) => setSearchTerm(e.target.value)}
                     />
                     <img
                         src={search_icon}
                         alt="Search"
-                        onClick={handleSearch} // Điều hướng khi bấm nút tìm kiếm
+                        onClick={handleSearch}
                     />
                 </div>
             </div>
@@ -79,17 +95,26 @@ const NavBar = ({ setSidebar }) => {
                 <img
                     src={upload_icon}
                     alt="Upload"
-                    onClick={() => navigate('/upload')} // Điều hướng đến trang upload
+                    onClick={() => navigate('/upload')}
                 />
                 <img
                     src={blogs_icon}
                     alt="Record"
-                    onClick={() => navigate('/record')} // Điều hướng đến trang blogs
+                    onClick={() => navigate('/record')}
                 />
-                <img
-                    src={notification_icon}
-                    alt="Notifications"
-                />
+                <div className="notification-container">
+                    <img
+                        src={notification_icon}
+                        alt="Notifications"
+                        onClick={() => navigate('/notification')}
+                    />
+                    {notificationCount > 0 && (
+                        <span className="notification-badge">
+                            {notificationCount > 99 ? '99+' : notificationCount}
+                        </span>
+                    )}
+                </div>
+
 
                 <div className="user-menu-container" style={{ position: 'relative' }}>
                     {accountInfo ? (

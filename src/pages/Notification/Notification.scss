@@ -1,0 +1,53 @@
+.notification-page {
+  max-width: 60%;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+h2 {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.notification-card {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.notification-card.unread {
+  background: #f0f8ff; /* Màu nền cho thông báo chưa đọc */
+}
+
+.notification-content {
+  flex: 1;
+}
+
+.notification-content p {
+  margin: 0 0 5px;
+  font-size: 16px;
+}
+
+.notification-content span {
+  color: #666;
+  font-size: 14px;
+}
+
+.mark-read-button {
+  background: #007bff;
+  color: #fff;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.mark-read-button:hover {
+  background: #0056b3;
+}

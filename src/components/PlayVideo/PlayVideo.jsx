@@ -5,7 +5,7 @@ import like from '../../assets/images/like.png';
 import dislike from '../../assets/images/dislike.png';
 import share from '../../assets/images/share.png';
 import save from '../../assets/images/save.png';
-import tech from '../../assets/images/tech.png';
+import tech from '../../assets/images/messages.png';
 import timeAgo from '../../utils/timeAgo';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../../authContext';
@@ -28,6 +28,45 @@ const PlayVideo = ({ onVideoTypeChange }) => {
     const [isFetching, setIsFetching] = useState(false);
 
     const observer = useRef();
+
+    const [reportMenuOpen, setReportMenuOpen] = useState(false);
+    const [selectedReason, setSelectedReason] = useState('');
+    const [customReason, setCustomReason] = useState('');
+
+    const reportReasons = [
+        "Vi phạm bản quyền",
+        "Nội dung phản cảm",
+        "Thông tin sai lệch",
+        "Kích động/thù ghét",
+        "Quảng bá chủ nghĩa khủng bố",
+        "Khác"
+    ];
+
+    const handleReport = () => {
+        setReportMenuOpen(prev => !prev);
+    };
+
+    const submitReport = async () => {
+        const reason = selectedReason === 'Khác' ? customReason.trim() : selectedReason;
+        if (!reason) {
+            alert("Vui lòng chọn hoặc nhập lý do báo cáo.");
+            return;
+        }
+
+        try {
+            await axiosInstance.post('/notification/report', {
+                content: `Báo cáo video "${video.title}" (ID: ${video.videoid}): ${reason}`,
+            });
+            alert("Báo cáo đã được gửi.");
+            setReportMenuOpen(false);
+            setSelectedReason('');
+            setCustomReason('');
+        } catch (error) {
+            console.error("❌ Lỗi khi gửi báo cáo:", error);
+            alert("Gửi báo cáo thất bại.");
+        }
+    };
+
 
     useEffect(() => {
         const fetchVideo = async () => {
@@ -345,10 +384,6 @@ const PlayVideo = ({ onVideoTypeChange }) => {
         }
     };
 
-    const handleReport = () => {
-        console.log('Video đã được báo cáo.');
-    };
-
     if (loading) return <div>Đang tải...</div>;
     if (error) return <div>Lỗi: {error}</div>;
     if (!video) return <div>Video không tồn tại.</div>;
@@ -376,6 +411,35 @@ const PlayVideo = ({ onVideoTypeChange }) => {
                     <span onClick={handleReport} className='report-button'>
                         <img src={tech} alt='Báo cáo' />Báo cáo
                     </span>
+                    {reportMenuOpen && (
+                        <div className="report-menu">
+                            <h4>Chọn lý do báo cáo</h4>
+                            <ul>
+                                {reportReasons.map(reason => (
+                                    <li key={reason}>
+                                        <label>
+                                            <input
+                                                type="radio"
+                                                name="report-reason"
+                                                value={reason}
+                                                checked={selectedReason === reason}
+                                                onChange={(e) => setSelectedReason(e.target.value)}
+                                            />
+                                            {reason}
+                                        </label>
+                                    </li>
+                                ))}
+                            </ul>
+                            {selectedReason === 'Khác' && (
+                                <textarea
+                                    placeholder="Nhập lý do khác..."
+                                    value={customReason}
+                                    onChange={(e) => setCustomReason(e.target.value)}
+                                />
+                            )}
+                            <button onClick={submitReport}>Gửi báo cáo</button>
+                        </div>
+                    )}
                 </div>
             </div>
             <hr />

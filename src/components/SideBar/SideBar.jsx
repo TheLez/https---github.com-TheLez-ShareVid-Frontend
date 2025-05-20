@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../authContext'; // Import useAuth
 import axiosInstance from '../../utils/axiosInstance';
 import './SideBar.scss';
 import home from '../../assets/images/home.png';
@@ -12,10 +13,12 @@ import music from '../../assets/images/music.png';
 import game_icon from '../../assets/images/game_icon.png';
 import news from '../../assets/images/news.png';
 import sports from '../../assets/images/sports.png';
+import tech from '../../assets/images/tech.png'; // Import icon Quản lý
 
 const SideBar = ({ sidebar, activeCategory, setActiveCategory, setFeedParams }) => {
     const [subscribedAccounts, setSubscribedAccounts] = useState([]);
     const navigate = useNavigate();
+    const { user } = useAuth(); // Lấy thông tin user từ AuthContext
 
     useEffect(() => {
         const fetchSubscribedAccounts = async () => {
@@ -36,11 +39,11 @@ const SideBar = ({ sidebar, activeCategory, setActiveCategory, setFeedParams }) 
 
     const handleCategoryClick = (category, type, orderByView) => {
         console.log(`Category clicked: ${category}, Type: ${type}, Order By View: ${orderByView}`);
+        const navState = { category, type, orderByView };
 
-        // Điều hướng đến các trang dựa trên category
         switch (category) {
             case 6:
-                navigate('/subscribed'); // Điều hướng đến trang Kênh đăng ký
+                navigate('/subscribed');
                 setActiveCategory(category);
                 return;
             case 7:
@@ -55,11 +58,12 @@ const SideBar = ({ sidebar, activeCategory, setActiveCategory, setFeedParams }) 
                 navigate('/liked');
                 setActiveCategory(category);
                 return;
+            case 10:
+                navigate('/admin');
+                setActiveCategory(category);
+                return;
             default:
-                // Điều hướng về trang chủ với state
-                navigate('/', {
-                    state: { category, type, orderByView }
-                });
+                navigate('/', { state: navState });
                 setActiveCategory(category);
                 setFeedParams({ type, orderByView });
                 break;
@@ -121,6 +125,11 @@ const SideBar = ({ sidebar, activeCategory, setActiveCategory, setFeedParams }) 
                     <img src={sports} alt="" /><p>Thể thao</p>
                 </div>
                 <hr />
+                {user && user.role === 'admin' && (
+                    <div className={`side-link ${activeCategory === 10 ? "active" : ""}`} onClick={() => handleCategoryClick(10, null, false)}>
+                        <img src={tech} alt="" /><p>Quản lý</p>
+                    </div>
+                )}
             </div>
         </div>
     );

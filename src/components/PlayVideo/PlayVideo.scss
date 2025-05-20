@@ -189,3 +189,31 @@
 .icon.active {
     filter: brightness(0) saturate(100%) invert(20%); /* Màu khi đã được chọn */
 }
+
+.report-menu {
+    margin-top: 10px;
+    background: #f9f9f9;
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 8px;
+    max-width: 300px;
+
+    select {
+        width: 100%;
+        margin-bottom: 8px;
+        padding: 6px;
+    }
+
+    button {
+        padding: 6px 12px;
+        background-color: #d9534f;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background-color: #c9302c;
+    }
+}

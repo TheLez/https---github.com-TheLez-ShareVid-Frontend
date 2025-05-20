@@ -1,10 +1,23 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext } from 'react';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [user, setUser] = useState(null); // State cho thông tin người dùng
+    const [isAuthenticated, setIsAuthenticated] = useState(() => {
+        // Khôi phục từ localStorage khi khởi động
+        return localStorage.getItem('isAuthenticated') === 'true';
+    });
+    const [user, setUser] = useState(() => {
+        // Khôi phục user từ localStorage
+        const savedUser = localStorage.getItem('user');
+        return savedUser ? JSON.parse(savedUser) : null;
+    });
+
+    // Đồng bộ state với localStorage
+    useEffect(() => {
+        localStorage.setItem('isAuthenticated', isAuthenticated);
+        localStorage.setItem('user', user ? JSON.stringify(user) : '');
+    }, [isAuthenticated, user]);
 
     // Hàm đăng nhập
     const login = (userData) => {
@@ -16,6 +29,8 @@ export const AuthProvider = ({ children }) => {
     const logout = () => {
         setUser(null);
         setIsAuthenticated(false);
+        localStorage.removeItem('user');
+        localStorage.removeItem('isAuthenticated');
     };
 
     return (

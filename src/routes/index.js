@@ -8,6 +8,8 @@ import Watched from '../pages/Watched/Watched';
 import Saved from '../pages/Saved/Saved';
 import LikeVideo from '../pages/LikeVideo/LikeVideo';
 import SubscribeList from '../pages/SubscribeList/SubscribeList';
+import Admin from '../pages/Admin/Admin';
+import Notification from '../pages/Notification/Notification';
 
 export const routes = [
     {
@@ -58,6 +60,16 @@ export const routes = [
     {
         path: '/subscribed', // Thêm route cho Video
         page: SubscribeList,
+        isShowHeader: true // Hoặc false tùy thuộc vào yêu cầu của bạn
+    },
+    {
+        path: '/admin', // Thêm route cho Video 
+        page: Admin,
+        isShowHeader: true // Hoặc false tùy thuộc vào yêu cầu của bạn
+    },
+    {
+        path: '/notification', // Thêm route cho Video 
+        page: Notification,
         isShowHeader: true // Hoặc false tùy thuộc vào yêu cầu của bạn
     }
 ];
