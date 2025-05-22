@@ -20,23 +20,25 @@ const Login = () => {
             const response = await axios.post('http://localhost:5000/api/account/sign-in', { email, password });
 
             if (response.data.status === "OK") {
-                const { access_token, refresh_token, account } = response.data; // Nhận cả token và thông tin tài khoản
+                const { access_token, refresh_token, account } = response.data;
                 localStorage.setItem('access_token', access_token);
                 localStorage.setItem('refresh_token', refresh_token);
-                console.log("Access Token:", access_token);
-                console.log("Refresh Token:", refresh_token);
-                // Lưu thông tin người dùng
+
                 login({ id: account.id, role: account.role, name: account.name, avatar: account.avatar });
 
                 navigate('/');
             } else {
-                setMessage('Đăng nhập không thành công. Vui lòng kiểm tra lại email và mật khẩu.');
+                // Nếu backend trả về status khác OK nhưng vẫn trong try (ví dụ status 200)
+                setMessage(response.data.message || 'Đăng nhập không thành công. Vui lòng kiểm tra lại.');
             }
         } catch (error) {
-            console.error("Error during login:", error);
-            setMessage('Đăng nhập không thành công. Vui lòng kiểm tra lại email và mật khẩu.');
+            // Trường hợp status !== 2xx, axios sẽ nhảy vào đây
+            const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Đăng nhập thất bại.';
+            setMessage(errorMsg);
+            console.error("Error during login:", errorMsg);
         }
     };
+
 
     const handleRegister = () => {
         navigate('/register'); // Điều hướng đến trang đăng ký
@@ -64,6 +66,7 @@ const Login = () => {
                 />
                 <button className="login-button" type="submit">Đăng Nhập</button>
             </form>
+            <br />
             {message && <p className="login-message">{message}</p>}
             <p className="register-prompt">
                 Chưa có tài khoản? <span className="register-link" onClick={handleRegister}>Đăng ký</span>

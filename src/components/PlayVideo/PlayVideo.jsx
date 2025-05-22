@@ -23,7 +23,7 @@ const PlayVideo = ({ onVideoTypeChange }) => {
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [isFetching, setIsFetching] = useState(false);
-    const defaultAvatar = '/path/to/default-avatar.png';
+    const defaultAvatar = 'https://static.thenounproject.com/png/4530368-200.png';
 
     useEffect(() => {
         console.log('PlayVideo useEffect running for videoId:', videoId);

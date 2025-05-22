@@ -18,15 +18,13 @@ const Register = () => {
     const handleRegister = async (e) => {
         e.preventDefault();
 
-        // Kiểm tra mật khẩu
         if (password !== confirmPassword) {
-            setMessage('Mật khẩu không khớp. Vui lòng kiểm tra lại.');
+            alert('Mật khẩu không khớp. Vui lòng kiểm tra lại.');
             return;
         }
 
-        // Kiểm tra trường bắt buộc
         if (!name || !email || !password || !birth) {
-            setMessage('Vui lòng điền đủ thông tin.');
+            alert('Vui lòng điền đủ thông tin.');
             return;
         }
 
@@ -44,13 +42,17 @@ const Register = () => {
 
         try {
             const response = await axios.post('http://localhost:5000/api/account/sign-up', formData);
-            setMessage('Tạo tài khoản thành công!');
+
+            // Hiển thị alert, sau khi bấm OK mới chuyển hướng
+            alert('Tạo tài khoản thành công!');
             navigate('/login');
         } catch (error) {
             console.error('Registration error:', error.response ? error.response.data : error.message);
-            setMessage(error.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
+            alert(error.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
         }
     };
+
+
 
     return (
         <div className="register-container">

@@ -10,7 +10,7 @@ const Feed = ({ type, orderByView }) => {
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
-    const limit = 20;
+    const limit = 24;
 
     // Gọi API để lấy danh sách video
     const fetchVideos = useCallback(async () => {
