@@ -3,13 +3,16 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './authContext';
 import NavBar from './components/NavBar/NavBar';
 import { routes } from './routes';
+import { NotificationProvider } from './NotificationContext';
 
 const App = () => {
   const [sidebar, setSidebar] = useState(true); // Mặc định sidebar mở rộng
 
   return (
     <AuthProvider>
-      <AppContent sidebar={sidebar} setSidebar={setSidebar} />
+      <NotificationProvider>
+        <AppContent sidebar={sidebar} setSidebar={setSidebar} />
+      </NotificationProvider>
     </AuthProvider>
   );
 };

@@ -1,12 +1,14 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useContext } from 'react';
 import axiosInstance from '../../utils/axiosInstance';
 import { useAuth } from '../../authContext';
 import timeAgo from '../../utils/timeAgo';
 import './Notification.scss';
 import SideBar from '../../components/SideBar/SideBar';
+import { NotificationContext } from '../../NotificationContext';
 
 const Notification = ({ sidebar, setSidebar }) => {
     const { user } = useAuth();
+    const { updateNotificationCount } = useContext(NotificationContext);
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -93,6 +95,8 @@ const Notification = ({ sidebar, setSidebar }) => {
                     n.notificationid === notificationId ? { ...n, status: 1 } : n
                 )
             );
+            // Cập nhật số lượng thông báo chưa đọc
+            await updateNotificationCount(user.id);
         } catch (error) {
             console.error(`Lỗi khi đánh dấu thông báo ${notificationId} đã đọc:`, error);
         }
@@ -146,7 +150,6 @@ const Notification = ({ sidebar, setSidebar }) => {
                 {isFetching && <p>Đang tải thêm thông báo...</p>}
             </div>
         </>
-
     );
 };
 

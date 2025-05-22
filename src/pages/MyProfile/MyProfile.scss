@@ -1,0 +1,203 @@
+.container {
+  margin-left: 240px;
+  padding: 20px;
+}
+
+.large-container {
+  margin-left: 80px;
+}
+
+.my-profile-page {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.account-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.account-info .avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 10px;
+}
+
+.account-info h2 {
+  font-size: 24px;
+  margin: 10px 0;
+}
+
+.account-info p {
+  margin: 5px 0;
+  color: #666;
+}
+
+.edit-button {
+  background: #007bff;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.edit-button:hover {
+  background: #0056b3;
+}
+
+.video-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.video-card {
+  text-decoration: none;
+  color: inherit;
+}
+
+.video-card img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.video-details h4 {
+  font-size: 16px;
+  margin: 8px 0;
+}
+
+.video-details p {
+  font-size: 14px;
+  color: #666;
+}
+
+.error {
+  color: red;
+  text-align: center;
+  margin: 10px 0;
+}
+
+/* Modal form */
+.edit-form-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.edit-form-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 400px;
+  max-width: 90%;
+}
+
+.edit-form-content h3 {
+  margin: 0 0 20px;
+  font-size: 20px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.form-group select {
+  height: 34px;
+}
+
+.avatar-preview {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  margin-top: 10px;
+  object-fit: cover;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.form-actions button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.form-actions button[type="submit"] {
+  background: #007bff;
+  color: #fff;
+}
+
+.form-actions button[type="submit"]:hover {
+  background: #0056b3;
+}
+
+.form-actions button[type="button"] {
+  background: #ccc;
+}
+
+.form-actions button[type="button"]:hover {
+  background: #aaa;
+}
+
+.video-filters {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.filter-button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    background-color: #f0f0f0;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.filter-button.active {
+    background-color: #007bff;
+    color: white;
+}
+
+.filter-button:hover {
+    background-color: #e0e0e0;
+}
+
+.filter-button.active:hover {
+    background-color: #0056b3;
+}

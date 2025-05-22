@@ -1,0 +1,161 @@
+.container {
+  margin-left: 240px;
+  padding: 20px;
+}
+
+.large-container {
+  margin-left: 80px;
+}
+
+.manage-account-page {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.manage-account-page h2 {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.search-bar {
+  margin-bottom: 20px;
+}
+
+.search-bar input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.account-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.account-table th,
+.account-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.account-table th {
+  background: #f4f4f4;
+  font-weight: bold;
+}
+
+.account-row {
+  cursor: pointer;
+}
+
+.account-row:hover {
+  background: #f9f9f9;
+}
+
+.error {
+  color: red;
+  text-align: center;
+  margin: 10px 0;
+}
+
+/* Modal form */
+.edit-form-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.edit-form-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 400px;
+  max-width: 90%;
+}
+
+.edit-form-content h3 {
+  margin: 0 0 20px;
+  font-size: 20px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.form-group select {
+  height: 34px;
+}
+
+.avatar-preview {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  margin-top: 10px;
+  object-fit: cover;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.form-actions button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.form-actions button[type="submit"] {
+  background: #007bff;
+  color: #fff;
+}
+
+.form-actions button[type="submit"]:hover {
+  background: #0056b3;
+}
+
+.form-actions button[type="button"] {
+  background: #ccc;
+}
+
+.form-actions button[type="button"]:hover {
+  background: #aaa;
+}
+
+.form-actions button:nth-child(2) {
+  background: #dc3545;
+  color: #fff;
+}
+
+.form-actions button:nth-child(2):hover {
+  background: #c82333;
+}

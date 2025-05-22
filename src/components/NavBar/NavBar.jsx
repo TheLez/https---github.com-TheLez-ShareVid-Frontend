@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import './NavBar.scss';
 import logo from '../../assets/images/logo.jpg';
 import menu_icon from '../../assets/images/menu.png';
@@ -9,11 +9,12 @@ import notification_icon from '../../assets/images/notification.png';
 import { useAuth } from '../../authContext';
 import axiosInstance from '../../utils/axiosInstance';
 import { useNavigate } from 'react-router-dom';
+import { NotificationContext } from '../../NotificationContext';
 
 const NavBar = ({ setSidebar }) => {
     const { user, logout } = useAuth();
+    const { notificationCount, updateNotificationCount } = useContext(NotificationContext);
     const [accountInfo, setAccountInfo] = useState(null);
-    const [notificationCount, setNotificationCount] = useState(0);
     const [error, setError] = useState(null);
     const [showMenu, setShowMenu] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -33,22 +34,11 @@ const NavBar = ({ setSidebar }) => {
             }
         };
 
-        const fetchNotificationCount = async () => {
-            if (user && user.id) {
-                try {
-                    console.log(`Fetching notification count for userid: ${user.id}`);
-                    const response = await axiosInstance.get('/notification/count');
-                    setNotificationCount(response.data.data.count || 0);
-                    console.log('Notification count:', response.data.data.count);
-                } catch (error) {
-                    console.error('Error fetching notification count:', error);
-                }
-            }
-        };
-
         fetchAccountInfo();
-        fetchNotificationCount();
-    }, [user]);
+        if (user && user.id) {
+            updateNotificationCount(user.id);
+        }
+    }, [user, updateNotificationCount]);
 
     const handleLogout = () => {
         localStorage.removeItem('access_token');
@@ -115,8 +105,7 @@ const NavBar = ({ setSidebar }) => {
                     )}
                 </div>
 
-
-                <div className="user-menu-container" style={{ position: 'relative' }}>
+                <div className="user-menu-container">
                     {accountInfo ? (
                         <img
                             src={accountInfo.data.account.avatar}
@@ -140,15 +129,32 @@ const NavBar = ({ setSidebar }) => {
                             boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
                             zIndex: 10,
                         }}>
-                            <button onClick={handleLogout} style={{
-                                background: 'none',
-                                border: 'none',
-                                color: '#333',
-                                cursor: 'pointer',
-                                padding: '4px 8px',
-                                width: '100%',
-                                textAlign: 'left'
-                            }}>
+                            <button
+                                onClick={() => navigate('/my-profile')}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#333',
+                                    cursor: 'pointer',
+                                    padding: '4px 8px',
+                                    width: '100%',
+                                    textAlign: 'left'
+                                }}
+                            >
+                                Hồ sơ của tôi
+                            </button>
+                            <button
+                                onClick={handleLogout}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#333',
+                                    cursor: 'pointer',
+                                    padding: '4px 8px',
+                                    width: '100%',
+                                    textAlign: 'left'
+                                }}
+                            >
                                 Đăng xuất
                             </button>
                         </div>

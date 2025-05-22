@@ -26,7 +26,7 @@ const Login = () => {
                 console.log("Access Token:", access_token);
                 console.log("Refresh Token:", refresh_token);
                 // Lưu thông tin người dùng
-                login({ id: account.id, role: account.role, name: account.name });
+                login({ id: account.id, role: account.role, name: account.name, avatar: account.avatar });
 
                 navigate('/');
             } else {

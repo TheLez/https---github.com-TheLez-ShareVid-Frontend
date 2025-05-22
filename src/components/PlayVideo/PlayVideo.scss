@@ -3,11 +3,11 @@
 }
 
 .play-video video {
-    width: 100%; /* Chiều rộng 100% của container */
-    height: auto; /* Để chiều cao tự động theo chiều rộng */
-    aspect-ratio: 16 / 9; /* Tỷ lệ 16:9 */
-    object-fit: contain; /* Giữ tỷ lệ khung hình và thêm màu đen nếu cần */
-    background-color: black; /* Màu nền cho video */
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: contain;
+    background-color: black;
 }
 
 .play-video h3 {
@@ -100,35 +100,94 @@
     margin-top: 15px;
 }
 
+.video-status {
+    margin: 10px 0;
+}
+
+.status-toggle {
+    cursor: pointer;
+    font-size: 14px;
+    padding: 5px 10px;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.status-toggle.public {
+    background: #e6f3e6;
+    color: #2e7d32;
+}
+
+.status-toggle.private {
+    background: #ffebee;
+    color: #c62828;
+}
+
 .comment {
     display: flex;
-    align-items: flex-start;
+    flex-direction: column; /* Sắp xếp theo cột */
     margin: 20px 0;
 }
 
-.comment img {
+.comment-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 8px; /* Khoảng cách với nội dung */
+}
+
+.comment-user {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: inherit;
+}
+
+.comment-user img {
     width: 35px;
     border-radius: 50%;
     margin-right: 15px;
 }
 
-.comment h3 {
+.comment-user h3 {
     font-size: 14px;
     margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .comment h3 span {
     font-size: 12px;
     color: #5a5a5a;
     font-weight: 500;
-    margin-left: 8px;
+}
+
+.threedot-icon {
+    cursor: pointer;
+}
+
+.threedot-icon img {
+    width: 16px;
+    height: 16px;
+}
+
+.comment-content {
+    margin-bottom: 8px; /* Khoảng cách với comment-action */
+}
+
+.comment-content p {
+    font-size: 14px;
+    color: #333;
+    margin: 0;
+    padding-left: 50px; /* Căn lề trái để thẳng hàng với tên */
 }
 
 .comment-action {
     display: flex;
     align-items: center;
-    margin: 8px 0;
     font-size: 14px;
+    padding-left: 50px; /* Căn lề trái để thẳng hàng với nội dung */
 }
 
 .comment-action img {
@@ -140,6 +199,77 @@
 .comment-action span {
     margin-right: 20px;
     color: #5a5a5a;
+}
+
+.comment-menu {
+    position: fixed;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 5px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+}
+
+.comment-menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.comment-menu li {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.comment-menu li:hover {
+    background: #f5f5f5;
+}
+
+.edit-comment-form {
+    margin: 10px 0;
+    padding-left: 50px; /* Căn lề trái để thẳng hàng */
+}
+
+.edit-comment-form textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    min-height: 60px;
+    font-size: 14px;
+}
+
+.edit-comment-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.edit-comment-actions button {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.edit-comment-actions button[type="submit"] {
+    background: #007bff;
+    color: #fff;
+}
+
+.edit-comment-actions button[type="submit"]:hover {
+    background: #0056b3;
+}
+
+.edit-comment-actions button[type="button"] {
+    background: #ccc;
+}
+
+.edit-comment-actions button[type="button"]:hover {
+    background: #aaa;
 }
 
 .comment-form {
@@ -168,11 +298,6 @@
     background-color: #0056b3;
 }
 
-.play-video-info {
-    display: flex;
-    align-items: center;
-}
-
 .icon {
     width: 24px;
     height: 24px;
@@ -183,11 +308,11 @@
 }
 
 .icon:hover {
-    filter: brightness(0) saturate(100%) invert(50%); /* Màu khi hover */
+    filter: brightness(0) saturate(100%) invert(50%);
 }
 
 .icon.active {
-    filter: brightness(0) saturate(100%) invert(20%); /* Màu khi đã được chọn */
+    filter: brightness(0) saturate(100%) invert(20%);
 }
 
 .report-menu {
@@ -197,23 +322,23 @@
     padding: 10px;
     border-radius: 8px;
     max-width: 300px;
+}
 
-    select {
-        width: 100%;
-        margin-bottom: 8px;
-        padding: 6px;
-    }
+.report-menu select {
+    width: 100%;
+    margin-bottom: 8px;
+    padding: 6px;
+}
 
-    button {
-        padding: 6px 12px;
-        background-color: #d9534f;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-    }
+.report-menu button {
+    padding: 6px 12px;
+    background-color: #d9534f;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
 
-    button:hover {
-        background-color: #c9302c;
-    }
+.report-menu button:hover {
+    background-color: #c9302c;
 }

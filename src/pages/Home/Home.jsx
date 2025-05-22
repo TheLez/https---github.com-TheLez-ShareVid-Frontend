@@ -4,16 +4,17 @@ import SideBar from '../../components/SideBar/SideBar';
 import Feed from '../../components/Feed/Feed';
 
 const Home = ({ sidebar, setSidebar }) => {
-    const [activeCategory, setActiveCategory] = React.useState(0);
-    const [feedParams, setFeedParams] = React.useState({ type: null, orderByView: false });
+    const [activeCategory, setActiveCategory] = useState(0);
+    const [feedParams, setFeedParams] = useState({ type: null, orderByView: false });
 
     useEffect(() => {
         setSidebar(true);
     }, [setSidebar]);
 
     return (
-        <>
+        <div className="home">
             <SideBar
+                className={`sidebar ${sidebar ? '' : 'sidebar-hidden'}`}
                 sidebar={sidebar}
                 activeCategory={activeCategory}
                 setActiveCategory={setActiveCategory}
@@ -25,7 +26,7 @@ const Home = ({ sidebar, setSidebar }) => {
                     orderByView={feedParams.orderByView}
                 />
             </div>
-        </>
+        </div>
     );
 };
 

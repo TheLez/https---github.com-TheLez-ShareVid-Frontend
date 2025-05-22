@@ -6,38 +6,39 @@ import Recommended from '../../components/Recommended/Recommended';
 import { useParams } from 'react-router-dom';
 
 const Video = ({ sidebar, setSidebar }) => {
-    const { videoId } = useParams(); // Lấy videoId từ URL
+    const { videoId } = useParams();
     const [category, setCategory] = useState(0);
-    const [activeCategory, setActiveCategory] = useState(0); // Thêm state cho activeCategory
-    const [videoType, setVideoType] = useState(null); // State để lưu videoType
+    const [activeCategory, setActiveCategory] = useState(0);
+    const [videoType, setVideoType] = useState(null);
 
-    // Callback để nhận videoType từ PlayVideo
     const handleVideoTypeChange = (type) => {
+        console.log('Video.jsx: Setting videoType:', type);
         setVideoType(type);
     };
 
     useEffect(() => {
-        setSidebar(false); // Đặt sidebar thành thu nhỏ khi load trang
-    }, [setSidebar]);
+        console.log('Video.jsx: videoId changed:', videoId);
+        setVideoType(null); // Reset videoType khi videoId thay đổi
+        setSidebar(false);
+    }, [videoId, setSidebar]);
 
     return (
         <div className='video-page'>
             <SideBar
                 sidebar={sidebar}
-                activeCategory={activeCategory} // Truyền activeCategory
-                setActiveCategory={setActiveCategory} // Truyền setActiveCategory
-                setFeedParams={() => { }} // Có thể để hàm rỗng nếu không dùng
+                activeCategory={activeCategory}
+                setActiveCategory={setActiveCategory}
+                setFeedParams={() => { }}
                 category={category}
                 setCategory={setCategory}
             />
             <div className={`play-container ${sidebar ? '' : 'large-container'}`}>
                 <PlayVideo
-                    videoId={videoId}
-                    onVideoTypeChange={handleVideoTypeChange} // Truyền callback vào PlayVideo
+                    onVideoTypeChange={handleVideoTypeChange}
                 />
                 <Recommended
                     videoId={videoId}
-                    videoType={videoType} // Truyền videoType vào Recommended
+                    videoType={videoType}
                 />
             </div>
         </div>

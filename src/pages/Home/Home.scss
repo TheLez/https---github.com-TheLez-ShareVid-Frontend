@@ -1,11 +1,36 @@
+.home {
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar {
+    width: 20%; /* Hoặc 240px nếu cố định */
+    background: #fff;
+    box-sizing: border-box;
+    position: static; /* Đảm bảo trong flow */
+    z-index: 1; /* Ngăn đè lên container */
+    transition: width 0.3s ease;
+    overflow: hidden;
+    padding: 0; /* Loại bỏ padding nếu có */
+    border: none; /* Loại bỏ border nếu có */
+}
+
 .container {
+    flex: 1;
     background: #f9f9f9;
-    padding-left: 17%;
-    padding-right: 2%;
-    padding-top: 20px;
-    padding-bottom: 20px;
+    padding: 20px;
+    margin-left: 25%; /* Tăng để khớp SideBar + khoảng cách */
+    box-sizing: border-box;
+    transition: margin-left 0.3s ease;
 }
 
 .large-container {
-    padding-left: 7%;
+    margin-left: 0; /* Khi SideBar ẩn */
+    padding: 20px;
+}
+
+/* Khi SideBar ẩn */
+.sidebar-hidden {
+    width: 0;
+    overflow: hidden;
 }

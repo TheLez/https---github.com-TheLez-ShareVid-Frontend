@@ -8,8 +8,11 @@ import Watched from '../pages/Watched/Watched';
 import Saved from '../pages/Saved/Saved';
 import LikeVideo from '../pages/LikeVideo/LikeVideo';
 import SubscribeList from '../pages/SubscribeList/SubscribeList';
-import Admin from '../pages/Admin/Admin';
 import Notification from '../pages/Notification/Notification';
+import MyProfile from '../pages/MyProfile/MyProfile';
+import ManageAccount from '../pages/ManageAccount/ManageAccount';
+import ManageVideo from '../pages/ManageVideo/ManageVideo';
+import Upload from '../pages/Upload/Upload';
 
 export const routes = [
     {
@@ -63,13 +66,28 @@ export const routes = [
         isShowHeader: true // Hoặc false tùy thuộc vào yêu cầu của bạn
     },
     {
-        path: '/admin', // Thêm route cho Video 
-        page: Admin,
+        path: '/manage-account', // Thêm route cho Video 
+        page: ManageAccount,
+        isShowHeader: true // Hoặc false tùy thuộc vào yêu cầu của bạn
+    },
+    {
+        path: '/manage-video', // Thêm route cho Video 
+        page: ManageVideo,
         isShowHeader: true // Hoặc false tùy thuộc vào yêu cầu của bạn
     },
     {
         path: '/notification', // Thêm route cho Video 
         page: Notification,
+        isShowHeader: true // Hoặc false tùy thuộc vào yêu cầu của bạn
+    },
+    {
+        path: '/my-profile', // Thêm route cho Video 
+        page: MyProfile,
+        isShowHeader: true // Hoặc false tùy thuộc vào yêu cầu của bạn
+    },
+    {
+        path: '/upload', // Thêm route cho Video 
+        page: Upload,
         isShowHeader: true // Hoặc false tùy thuộc vào yêu cầu của bạn
     }
 ];

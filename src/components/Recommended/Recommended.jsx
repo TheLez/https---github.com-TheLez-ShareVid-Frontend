@@ -14,7 +14,7 @@ const Recommended = ({ videoId, videoType }) => {
     const [hasMore, setHasMore] = useState(true);
     const navigate = useNavigate();
 
-    console.log('Recommended component mounted', { videoId, videoType });
+    console.log('Recommended component rendered', { videoId, videoType });
 
     const fetchRecommendations = useCallback(async (retryCount = 0, maxRetries = 3) => {
         if (retryCount >= maxRetries) {
@@ -38,9 +38,9 @@ const Recommended = ({ videoId, videoType }) => {
             console.log('Fetched video IDs:', data.map(v => v.videoid));
 
             if (data.length === 0) {
-                console.warn(`⚠️ Empty data for page ${page}, retrying with next page...`);
-                setPage(prev => prev + 1);
-                return fetchRecommendations(retryCount + 1, maxRetries);
+                console.warn(`⚠️ Empty data for page ${page}`);
+                setHasMore(false);
+                return;
             }
 
             setVideos(prev => {
@@ -52,30 +52,32 @@ const Recommended = ({ videoId, videoType }) => {
             setHasMore(data.length === LIMIT);
         } catch (err) {
             console.error('❌ Error fetching recommendations:', err);
-            console.warn(`⚠️ Retrying... (${retryCount + 1}/${maxRetries})`);
-            return fetchRecommendations(retryCount + 1, maxRetries);
+            setError(err.response?.data?.error || 'Không thể tải video đề xuất.');
         } finally {
-            if (retryCount === 0) {
-                setLoading(false);
-            }
-            console.log('fetchRecommendations kết thúc');
+            setLoading(false);
+            console.log('fetchRecommendations completed');
         }
     }, [videoType, page, videoId]);
 
     useEffect(() => {
-        console.log('useEffect kiểm tra điều kiện:', { videoType, videoId, hasMore, page });
-        if (videoType === null || videoType === undefined || !videoId || !hasMore) {
-            console.warn('⚠️ useEffect không chạy do:', {
+        console.log('Recommended useEffect:', { videoType, videoId, hasMore, page });
+        // Reset state khi videoId hoặc videoType thay đổi
+        setVideos([]);
+        setPage(1);
+        setHasMore(true);
+        setError(null);
+        setLoading(true);
+
+        if (videoType === null || videoType === undefined || !videoId) {
+            console.warn('⚠️ Skipping fetch due to:', {
                 videoTypeIsNull: videoType === null || videoType === undefined,
-                videoIdIsNull: !videoId,
-                hasMoreIsFalse: !hasMore
+                videoIdIsNull: !videoId
             });
             setLoading(false);
             return;
         }
-        console.log('useEffect bắt đầu');
         fetchRecommendations();
-    }, [fetchRecommendations, videoType, page, videoId, hasMore]);
+    }, [videoId, videoType]); // Chỉ phụ thuộc vào videoId và videoType
 
     useEffect(() => {
         const debounce = (fn, delay) => {
@@ -108,7 +110,6 @@ const Recommended = ({ videoId, videoType }) => {
         new Map(videos.map(video => [video.videoid, video])).values()
     ).filter(video => video && video.videoid && video.thumbnail && video.title && video.Account);
 
-    console.log('Videos before unique:', videos.map(v => v.videoid));
     console.log('Unique video IDs:', uniqueVideos.map(v => v.videoid));
 
     return (
@@ -136,13 +137,11 @@ const Recommended = ({ videoId, videoType }) => {
                     </div>
                 ))
             ) : (
-                !loading && <p>Đang tải...</p>
+                !loading && <p>Không có video đề xuất.</p>
             )}
             {loading && <p>Đang tải...</p>}
         </div>
     );
 };
 
-export default React.memo(Recommended, (prevProps, nextProps) =>
-    prevProps.videoId === nextProps.videoId && prevProps.videoType === nextProps.videoType
-);
+export default Recommended;

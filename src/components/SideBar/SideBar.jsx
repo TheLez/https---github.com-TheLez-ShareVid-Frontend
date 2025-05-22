@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../authContext'; // Import useAuth
+import { useAuth } from '../../authContext';
 import axiosInstance from '../../utils/axiosInstance';
 import './SideBar.scss';
 import home from '../../assets/images/home.png';
@@ -13,12 +13,12 @@ import music from '../../assets/images/music.png';
 import game_icon from '../../assets/images/game_icon.png';
 import news from '../../assets/images/news.png';
 import sports from '../../assets/images/sports.png';
-import tech from '../../assets/images/tech.png'; // Import icon Quản lý
+import tech from '../../assets/images/tech.png';
 
 const SideBar = ({ sidebar, activeCategory, setActiveCategory, setFeedParams }) => {
     const [subscribedAccounts, setSubscribedAccounts] = useState([]);
     const navigate = useNavigate();
-    const { user } = useAuth(); // Lấy thông tin user từ AuthContext
+    const { user } = useAuth();
 
     useEffect(() => {
         const fetchSubscribedAccounts = async () => {
@@ -38,7 +38,7 @@ const SideBar = ({ sidebar, activeCategory, setActiveCategory, setFeedParams }) 
     }, []);
 
     const handleCategoryClick = (category, type, orderByView) => {
-        console.log(`Category clicked: ${category}, Type: ${type}, Order By View: ${orderByView}`);
+        console.log(`Category clicked: ${category}, Type: ${type}, Order By View: ${orderByView}, ActiveCategory set to: ${category}`);
         const navState = { category, type, orderByView };
 
         switch (category) {
@@ -59,7 +59,11 @@ const SideBar = ({ sidebar, activeCategory, setActiveCategory, setFeedParams }) 
                 setActiveCategory(category);
                 return;
             case 10:
-                navigate('/admin');
+                navigate('/manage-account');
+                setActiveCategory(category);
+                return;
+            case 11:
+                navigate('/manage-video');
                 setActiveCategory(category);
                 return;
             default:
@@ -125,10 +129,17 @@ const SideBar = ({ sidebar, activeCategory, setActiveCategory, setFeedParams }) 
                     <img src={sports} alt="" /><p>Thể thao</p>
                 </div>
                 <hr />
+
                 {user && user.role === 'admin' && (
-                    <div className={`side-link ${activeCategory === 10 ? "active" : ""}`} onClick={() => handleCategoryClick(10, null, false)}>
-                        <img src={tech} alt="" /><p>Quản lý</p>
-                    </div>
+                    <>
+                        <h3>Quản lý</h3>
+                        <div className={`side-link ${activeCategory === 10 ? "active" : ""}`} onClick={() => handleCategoryClick(10, null, false)}>
+                            <img src={tech} alt="" /><p>Tài khoản</p>
+                        </div>
+                        <div className={`side-link ${activeCategory === 11 ? "active" : ""}`} onClick={() => handleCategoryClick(11, null, false)}>
+                            <img src={tech} alt="" /><p>Video</p>
+                        </div>
+                    </>
                 )}
             </div>
         </div>
