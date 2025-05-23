@@ -13,6 +13,7 @@ import MyProfile from '../pages/MyProfile/MyProfile';
 import ManageAccount from '../pages/ManageAccount/ManageAccount';
 import ManageVideo from '../pages/ManageVideo/ManageVideo';
 import Upload from '../pages/Upload/Upload';
+import Record from '../pages/Record/Record';
 
 export const routes = [
     {
@@ -88,6 +89,11 @@ export const routes = [
     {
         path: '/upload', // Thêm route cho Video 
         page: Upload,
+        isShowHeader: true // Hoặc false tùy thuộc vào yêu cầu của bạn
+    },
+    {
+        path: '/record', // Thêm route cho Video 
+        page: Record,
         isShowHeader: true // Hoặc false tùy thuộc vào yêu cầu của bạn
     }
 ];

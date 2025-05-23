@@ -69,6 +69,12 @@
     cursor: pointer;
     transition: background-color 0.3s;
 
+    .subscribe-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    }
+
+
     &:hover {
         background-color: #cc0000;
     }

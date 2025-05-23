@@ -1,0 +1,39 @@
+.record-canvas {
+    position: relative;
+    max-width: 640px;
+    margin: 0 auto;
+
+    canvas {
+        width: 100%;
+        height: auto;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .controls {
+        margin-top: 10px;
+        text-align: center;
+
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+
+            &:disabled {
+                background-color: #ccc;
+                cursor: not-allowed;
+            }
+        }
+    }
+
+    .error {
+        color: red;
+        margin-top: 10px;
+        text-align: center;
+    }
+}

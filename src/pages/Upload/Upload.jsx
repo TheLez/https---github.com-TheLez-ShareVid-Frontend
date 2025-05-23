@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../authContext';
 import axiosInstance from '../../utils/axiosInstance';
-import SideBar from '../../components/SideBar/SideBar';
+import StudioSideBar from '../../components/SideBar/StudioSideBar';
 import './Upload.scss';
 
 const Upload = ({ sidebar, setSidebar }) => {
@@ -17,7 +17,7 @@ const Upload = ({ sidebar, setSidebar }) => {
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
     const [category, setCategory] = useState(0);
-    const [activeCategory, setActiveCategory] = useState(11);
+    const [activeCategory, setActiveCategory] = useState(2);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -121,7 +121,7 @@ const Upload = ({ sidebar, setSidebar }) => {
 
     return (
         <>
-            <SideBar
+            <StudioSideBar
                 sidebar={sidebar}
                 activeCategory={activeCategory}
                 setActiveCategory={setActiveCategory}

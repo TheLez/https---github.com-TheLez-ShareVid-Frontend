@@ -4,9 +4,12 @@ import './Account.scss';
 import SideBar from '../../components/SideBar/SideBar';
 import axiosInstance from '../../utils/axiosInstance';
 import timeAgo from '../../utils/timeAgo';
+import { useAuth } from '../../authContext';
 
 const Account = ({ sidebar, setSidebar }) => {
     const { id } = useParams();
+    const { user } = useAuth();
+    const isOwner = user?.id?.toString() === id?.toString();
     const [accountData, setAccountData] = useState(null);
     const [videos, setVideos] = useState([]);
     const [page, setPage] = useState(1);
@@ -164,12 +167,16 @@ const Account = ({ sidebar, setSidebar }) => {
                             <h2>{accountData.name}</h2>
                             <p>{accountData.accountdescribe}</p>
                             <p>Đăng ký: {accountData.subscription}</p>
-                            <button
-                                className={`subscribe-button ${isSubscribed ? 'subscribed' : ''}`}
-                                onClick={handleSubscribe}
-                            >
-                                {isSubscribed ? 'Đã đăng ký' : 'Đăng ký'}
-                            </button>
+                            {!isOwner && (
+                                <button
+                                    className={`subscribe-button ${isSubscribed ? 'subscribed' : ''}`}
+                                    onClick={handleSubscribe}
+                                    disabled={isOwner}
+                                >
+                                    {isSubscribed ? 'Đã đăng ký' : 'Đăng ký'}
+                                </button>
+                            )}
+
                         </div>
                     ) : (
                         <p>Đang tải thông tin tài khoản...</p>

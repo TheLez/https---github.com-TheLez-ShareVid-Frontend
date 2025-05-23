@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './MyProfile.scss';
-import SideBar from '../../components/SideBar/SideBar';
+import StudioSideBar from '../../components/SideBar/StudioSideBar';
 import axiosInstance from '../../utils/axiosInstance';
 import timeAgo from '../../utils/timeAgo';
 import { useAuth } from '../../authContext';
@@ -13,7 +13,7 @@ const MyProfile = ({ sidebar, setSidebar }) => {
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [category, setCategory] = useState(0);
-    const [activeCategory, setActiveCategory] = useState(0);
+    const [activeCategory, setActiveCategory] = useState(1);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [showEditForm, setShowEditForm] = useState(false);
@@ -238,7 +238,7 @@ const MyProfile = ({ sidebar, setSidebar }) => {
 
     return (
         <>
-            <SideBar
+            <StudioSideBar
                 sidebar={sidebar}
                 activeCategory={activeCategory}
                 setActiveCategory={setActiveCategory}
