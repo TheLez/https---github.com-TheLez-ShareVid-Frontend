@@ -14,6 +14,7 @@ import ManageAccount from '../pages/ManageAccount/ManageAccount';
 import ManageVideo from '../pages/ManageVideo/ManageVideo';
 import Upload from '../pages/Upload/Upload';
 import Record from '../pages/Record/Record';
+import Edit from '../pages/Edit/Edit';
 
 export const routes = [
     {
@@ -94,6 +95,11 @@ export const routes = [
     {
         path: '/record', // Thêm route cho Video 
         page: Record,
+        isShowHeader: true // Hoặc false tùy thuộc vào yêu cầu của bạn
+    },
+    {
+        path: '/edit', // Thêm route cho Video 
+        page: Edit,
         isShowHeader: true // Hoặc false tùy thuộc vào yêu cầu của bạn
     }
 ];

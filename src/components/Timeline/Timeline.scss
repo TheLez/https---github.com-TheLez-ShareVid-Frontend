@@ -1,0 +1,43 @@
+.timeline {
+  width: 640px;
+  height: 150px;
+  position: relative;
+  margin-top: 20px;
+  border: 1px solid #ccc;
+}
+
+.track {
+  height: 40px;
+  background-color: #f0f0f0;
+  margin: 5px 0;
+}
+
+.segment {
+  background-color: #007bff;
+  color: white;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+}
+
+.video-track {
+  background-color: #d0e6ff;
+}
+
+.image-track {
+  background-color: #e6ffd0;
+}
+
+.audio-track {
+  background-color: #ffd0e6;
+}
+
+.playhead {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background-color: red;
+  transition: left 0.1s linear;
+}

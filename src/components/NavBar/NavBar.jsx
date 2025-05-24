@@ -5,6 +5,7 @@ import menu_icon from '../../assets/images/menu.png';
 import search_icon from '../../assets/images/search.png';
 import upload_icon from '../../assets/images/upload.png';
 import blogs_icon from '../../assets/images/blogs.png';
+import cast_icon from '../../assets/images/cast.png';
 import notification_icon from '../../assets/images/notification.png';
 import { useAuth } from '../../authContext';
 import axiosInstance from '../../utils/axiosInstance';
@@ -82,6 +83,11 @@ const NavBar = ({ setSidebar }) => {
             </div>
 
             <div className="nav-right flex-div">
+                <img
+                    src={cast_icon}
+                    alt="Edit"
+                    onClick={() => navigate('/edit')}
+                />
                 <img
                     src={upload_icon}
                     alt="Upload"
