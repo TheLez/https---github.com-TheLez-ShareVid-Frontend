@@ -13,20 +13,78 @@
     .controls {
         margin-top: 10px;
         text-align: center;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
 
-        button {
-            padding: 10px 20px;
-            margin: 5px;
-            font-size: 16px;
-            cursor: pointer;
-            border: none;
-            border-radius: 5px;
-            background-color: #007bff;
-            color: white;
+        .filter-group {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
 
-            &:disabled {
-                background-color: #ccc;
-                cursor: not-allowed;
+            select {
+                padding: 8px 12px;
+                font-size: 16px;
+                border-radius: 5px;
+                border: 1px solid #ccc;
+                background-color: #fff;
+                cursor: pointer;
+                width: 200px;
+
+                &:disabled {
+                    background-color: #f0f0f0;
+                    cursor: not-allowed;
+                }
+            }
+        }
+
+        .audio-group {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+
+            input[type="file"] {
+                padding: 8px;
+                font-size: 16px;
+                border-radius: 5px;
+                border: 1px solid #ccc;
+                cursor: pointer;
+
+                &:disabled {
+                    background-color: #f0f0f0;
+                    cursor: not-allowed;
+                }
+            }
+
+            span {
+                font-size: 14px;
+                color: #333;
+                max-width: 200px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+
+            button {
+                padding: 10px 20px;
+                font-size: 16px;
+                cursor: pointer;
+                border: none;
+                border-radius: 5px;
+                background-color: #007bff;
+                color: white;
+
+                &:disabled {
+                    background-color: #ccc;
+                    cursor: not-allowed;
+                }
             }
         }
     }

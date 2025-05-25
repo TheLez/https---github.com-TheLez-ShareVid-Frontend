@@ -3,38 +3,32 @@
     margin: 20px auto;
     text-align: center;
 
-    h1 {
-        color: #333;
-        margin-bottom: 20px;
-    }
+    .header-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px; // Tăng khoảng cách để tách biệt dropdown với nội dung bên dưới
 
-    .controls {
-        margin-top: 20px;
-
-        select,
-        .download-link {
-            padding: 10px 20px;
-            margin: 5px;
-            font-size: 16px;
-            border-radius: 5px;
+        h1 {
+            color: #333;
+            font-size: 24px;
+            margin: 0;
         }
 
-        select {
-            border: 1px solid #ccc;
-            background-color: white;
-            cursor: pointer;
+        .mode-selector {
+            select {
+                padding: 8px 12px;
+                font-size: 16px;
+                border-radius: 5px;
+                border: 1px solid #ccc;
+                background-color: white;
+                cursor: pointer;
 
-            &:disabled {
-                background-color: #f0f0f0;
-                cursor: not-allowed;
+                &:disabled {
+                    background-color: #f0f0f0;
+                    cursor: not-allowed;
+                }
             }
-        }
-
-        .download-link {
-            display: inline-block;
-            background-color: #28a745;
-            color: white;
-            text-decoration: none;
         }
     }
 }

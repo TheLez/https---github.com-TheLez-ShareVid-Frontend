@@ -1,0 +1,113 @@
+.screen-recorder {
+    position: relative;
+    max-width: 640px;
+    margin: 0 auto;
+
+    .video-container {
+        position: relative;
+    }
+
+    video {
+        width: 100%;
+        height: auto;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .controls {
+        margin-top: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+
+        .webcam-toggle {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            label {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                font-size: 16px;
+                color: #333;
+
+                input[type="checkbox"] {
+                    width: 16px;
+                    height: 16px;
+                    cursor: pointer;
+
+                    &:disabled {
+                        cursor: not-allowed;
+                    }
+                }
+            }
+        }
+
+        .webcam-settings {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+
+            label {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                font-size: 14px;
+                color: #333;
+
+                input[type="number"] {
+                    padding: 5px;
+                    font-size: 14px;
+                    border-radius: 5px;
+                    border: 1px solid #ccc;
+                    width: 60px;
+                    text-align: center;
+
+                    &:disabled {
+                        background-color: #f0f0f0;
+                        cursor: not-allowed;
+                    }
+                }
+            }
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+
+            button {
+                padding: 10px 20px;
+                font-size: 16px;
+                cursor: pointer;
+                border: none;
+                border-radius: 5px;
+                background-color: #007bff;
+                color: white;
+
+                &:disabled {
+                    background-color: #ccc;
+                    cursor: not-allowed;
+                }
+            }
+        }
+    }
+
+    .pip-instruction {
+        margin-top: 10px;
+        text-align: center;
+        font-size: 14px;
+        color: #555;
+        background-color: #f8f9fa;
+        padding: 10px;
+        border-radius: 5px;
+    }
+
+    .error {
+        color: red;
+        margin-top: 10px;
+        text-align: center;
+    }
+}

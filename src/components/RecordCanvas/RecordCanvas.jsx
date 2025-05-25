@@ -2,9 +2,83 @@ import React, { useEffect, useRef, useState } from 'react';
 import vision from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.js";
 import './RecordCanvas.scss';
 
+// Giải nén FilesetResolver và FaceLandmarker từ vision
 const { FaceLandmarker, FilesetResolver } = vision;
 
-const RecordCanvas = ({ onRecordingStart, onRecordingStop, selectedFilter, selectedBackground, selectedAudio }) => {
+// Thêm các lớp LowPassFilter và OneEuroFilter
+class LowPassFilter {
+    constructor(alpha) {
+        this.y = null;
+        this.s = null;
+        this.setAlpha(alpha);
+    }
+
+    setAlpha(alpha) {
+        if (alpha <= 0 || alpha > 1.0) {
+            throw new Error('alpha should be in (0.0, 1.0]');
+        }
+        this.alpha = alpha;
+    }
+
+    filter(value) {
+        if (this.y === null) {
+            this.y = value;
+            this.s = value;
+        } else {
+            this.y = this.alpha * value + (1.0 - this.alpha) * this.s;
+            this.s = this.y;
+        }
+        return this.y;
+    }
+}
+
+class OneEuroFilter {
+    constructor(freq, mincutoff = 0.3, beta = 0.2, dcutoff = 1.0) {
+        this.freq = freq;
+        this.mincutoff = mincutoff;
+        this.beta = beta;
+        this.dcutoff = dcutoff;
+        this.x = new LowPassFilter(this.getAlpha(this.mincutoff));
+        this.dx = new LowPassFilter(this.getAlpha(this.dcutoff));
+        this.lasttime = null;
+    }
+
+    getAlpha(cutoff) {
+        const safeCutoff = Math.max(0.1, Math.min(cutoff, 10));
+        const te = 1.0 / this.freq;
+        const tau = 1.0 / (2 * Math.PI * safeCutoff);
+        let alpha = 1.0 / (1.0 + tau / te);
+        alpha = Math.max(0.0001, Math.min(alpha, 1.0));
+        return alpha;
+    }
+
+    filter(value, timestamp = null) {
+        if (this.lasttime !== null && timestamp !== null) {
+            const deltaTime = timestamp - this.lasttime;
+            if (deltaTime > 0) {
+                this.freq = Math.min(120, Math.max(1.0 / deltaTime, 1));
+            } else {
+                this.freq = 30;
+            }
+        } else {
+            this.freq = 30;
+        }
+        this.lasttime = timestamp;
+
+        const prev_x = this.x.y;
+        const x_filter = this.x.filter(value);
+
+        const dx = prev_x !== null ? (x_filter - prev_x) * this.freq : 0.0;
+        const dx_filter = this.dx.filter(dx);
+
+        const cutoff = this.mincutoff + this.beta * Math.abs(dx_filter);
+        this.x.setAlpha(this.getAlpha(cutoff));
+
+        return x_filter;
+    }
+}
+
+const RecordCanvas = ({ onRecordingStart, onRecordingStop }) => {
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
     const audioRef = useRef(null);
@@ -15,14 +89,38 @@ const RecordCanvas = ({ onRecordingStart, onRecordingStop, selectedFilter, selec
     const recordedChunksRef = useRef([]);
     const streamRef = useRef(null);
     const lastLandmarksRef = useRef(null);
-    const backgroundImageRef = useRef(null);
-    const filterRef = useRef(selectedFilter);
-    const backgroundRef = useRef(selectedBackground);
-    const lastFaceDetectedTimeRef = useRef(null); // Thời gian cuối cùng phát hiện khuôn mặt
-    const filterOpacityRef = useRef(1); // Độ trong suốt của filter
-    const lastFrameTimeRef = useRef(0); // Theo dõi thời gian khung hình để tính FPS
-    const newLandmarksRef = useRef(null); // Lưu landmarks mới tạm thời
-    const transitionStartTimeRef = useRef(null); // Thời gian bắt đầu chuyển đổi landmarks
+    const filterRef = useRef('none');
+    const lastFaceDetectedTimeRef = useRef(null);
+    const filterOpacityRef = useRef(1);
+    const lastFrameTimeRef = useRef(0);
+    const glassesImageRef = useRef(null);
+    const hatImageRef = useRef(null);
+    const landmarkFiltersRef = useRef(null);
+    const [selectedFilter, setSelectedFilter] = useState('none');
+    const [selectedAudioFile, setSelectedAudioFile] = useState(null);
+
+    // Tải trước filter kính và mũ
+    useEffect(() => {
+        const glasses = new Image();
+        glasses.src = '/assets/filters/glasses.png';
+        glasses.onload = () => {
+            console.log('Glasses filter preloaded');
+            glassesImageRef.current = glasses;
+        };
+        glasses.onerror = () => {
+            console.error('Error preloading glasses filter:', glasses.src);
+        };
+
+        const hat = new Image();
+        hat.src = '/assets/filters/hat.png';
+        hat.onload = () => {
+            console.log('Hat filter preloaded');
+            hatImageRef.current = hat;
+        };
+        hat.onerror = () => {
+            console.error('Error preloading hat filter:', hat.src);
+        };
+    }, []);
 
     // Kiểm tra quyền webcam
     const checkCameraPermission = async () => {
@@ -65,13 +163,12 @@ const RecordCanvas = ({ onRecordingStart, onRecordingStop, selectedFilter, selec
 
     // Khởi động webcam
     useEffect(() => {
-        if (!faceLandmarker) return; // Chờ FaceLandmarker khởi tạo xong
+        if (!faceLandmarker) return;
 
         let isMounted = true;
 
         const startVideo = async () => {
             try {
-                // Kiểm tra quyền webcam trước
                 const hasPermission = await checkCameraPermission();
                 if (!hasPermission) {
                     throw new Error('Quyền truy cập webcam không được cấp. Vui lòng kiểm tra cài đặt trình duyệt.');
@@ -121,61 +218,55 @@ const RecordCanvas = ({ onRecordingStart, onRecordingStop, selectedFilter, selec
         };
     }, [faceLandmarker]);
 
-    // Cập nhật refs khi props thay đổi
+    // Cập nhật refs khi trạng thái thay đổi
     useEffect(() => {
         filterRef.current = selectedFilter;
-        backgroundRef.current = selectedBackground;
-        console.log('Updated refs:', { filter: filterRef.current, background: backgroundRef.current });
-    }, [selectedFilter, selectedBackground]);
-
-    // Quản lý audio
-    useEffect(() => {
-        console.log('Selected audio:', selectedAudio);
-        if (selectedAudio !== 'none' && audioRef.current) {
-            audioRef.current.src = `/assets/audio/${selectedAudio}.mp3`;
-            console.log('Setting audio src:', audioRef.current.src);
-            fetch(audioRef.current.src)
-                .then(res => console.log('Audio fetch status:', res.status))
-                .catch(err => console.error('Audio fetch error:', err));
-            audioRef.current.play().catch(err => console.error('Error playing audio:', err));
-        } else if (audioRef.current) {
-            audioRef.current.pause();
-        }
-    }, [selectedAudio]);
-
-    // Tải và lưu background image
-    useEffect(() => {
-        console.log('Background effect triggered with:', backgroundRef.current);
-        if (backgroundRef.current === 'bg1' || backgroundRef.current === 'bg2') {
-            const bgImage = new Image();
-            bgImage.src = `/assets/backgrounds/${backgroundRef.current}.jpg`;
-            console.log('Preloading background image:', bgImage.src);
-            fetch(bgImage.src, { signal: AbortSignal.timeout(5000) })
-                .then(res => console.log('Background fetch status:', res.status))
-                .catch(err => console.error('Background fetch error:', err));
-            bgImage.onload = () => {
-                console.log('Background image preloaded successfully');
-                backgroundImageRef.current = bgImage;
-            };
-            bgImage.onerror = () => {
-                console.error('Error preloading background image:', bgImage.src);
-                backgroundImageRef.current = null;
-            };
-        } else {
-            backgroundImageRef.current = null;
-            console.log('No background selected');
-        }
-    }, [selectedBackground]);
+        console.log('Updated refs:', { filter: filterRef.current });
+    }, [selectedFilter]);
 
     // Làm mượt landmarks
     const smoothLandmarks = (currentLandmarks, previousLandmarks) => {
-        if (!previousLandmarks) return currentLandmarks;
-        const smoothingFactor = 0.1; // Giảm hệ số làm mượt để giữ nhiều giá trị cũ hơn
-        return currentLandmarks.map((landmark, index) => ({
-            x: landmark.x * smoothingFactor + previousLandmarks[index].x * (1 - smoothingFactor),
-            y: landmark.y * smoothingFactor + previousLandmarks[index].y * (1 - smoothingFactor),
-            z: landmark.z * smoothingFactor + previousLandmarks[index].z * (1 - smoothingFactor),
-        }));
+        if (!previousLandmarks || currentLandmarks.length !== previousLandmarks.length) {
+            return currentLandmarks;
+        }
+        const smoothingFactor = 0.05;
+        return currentLandmarks.map((landmark, index) => {
+            const prevLandmark = previousLandmarks[index];
+            if (!prevLandmark || !landmark) return landmark;
+            return {
+                x: landmark.x * smoothingFactor + prevLandmark.x * (1 - smoothingFactor),
+                y: landmark.y * smoothingFactor + prevLandmark.y * (1 - smoothingFactor),
+                z: landmark.z * smoothingFactor + prevLandmark.z * (1 - smoothingFactor),
+            };
+        });
+    };
+
+    // Áp dụng bộ lọc One-Euro cho toàn bộ landmarks
+    const filterLandmarks = (landmarks, timestamp) => {
+        if (!landmarks || landmarks.length !== 468) {
+            console.warn('Invalid number of landmarks:', landmarks ? landmarks.length : 'undefined');
+            return landmarks;
+        }
+
+        if (!landmarkFiltersRef.current) {
+            landmarkFiltersRef.current = Array.from({ length: 468 }, () => ({
+                x: new OneEuroFilter(30, 0.3, 0.2, 1.0),
+                y: new OneEuroFilter(30, 0.3, 0.2, 1.0),
+                z: new OneEuroFilter(30, 0.3, 0.2, 1.0),
+            }));
+        }
+
+        return landmarks.map((landmark, index) => {
+            if (!landmark || typeof landmark.x === 'undefined' || typeof landmark.y === 'undefined' || typeof landmark.z === 'undefined') {
+                console.warn('Invalid landmark at index:', index, landmark);
+                return landmark;
+            }
+            return {
+                x: landmarkFiltersRef.current[index].x.filter(landmark.x, timestamp / 1000),
+                y: landmarkFiltersRef.current[index].y.filter(landmark.y, timestamp / 1000),
+                z: landmarkFiltersRef.current[index].z.filter(landmark.z, timestamp / 1000),
+            };
+        });
     };
 
     // Vẽ frame lên canvas
@@ -201,7 +292,6 @@ const RecordCanvas = ({ onRecordingStart, onRecordingStop, selectedFilter, selec
                 return;
             }
 
-            // Tính FPS
             const now = performance.now();
             if (lastFrameTimeRef.current) {
                 const deltaTime = now - lastFrameTimeRef.current;
@@ -221,33 +311,23 @@ const RecordCanvas = ({ onRecordingStart, onRecordingStop, selectedFilter, selec
                 const results = await faceLandmarker.detectForVideo(videoRef.current, performance.now());
                 console.log('FaceLandmarker results:', results.faceLandmarks.length);
                 if (results.faceLandmarks.length > 0) {
-                    // Lưu landmarks mới vào biến tạm thời
                     const smoothedLandmarks = lastLandmarksRef.current
                         ? smoothLandmarks(results.faceLandmarks[0], lastLandmarksRef.current)
                         : results.faceLandmarks[0];
-                    newLandmarksRef.current = smoothedLandmarks;
+                    const filteredLandmarks = filterLandmarks(smoothedLandmarks, now);
+                    lastLandmarksRef.current = filteredLandmarks;
                     lastFaceDetectedTimeRef.current = performance.now();
                     filterOpacityRef.current = 1;
-
-                    // Nếu đang trong quá trình chuyển đổi, tiếp tục sử dụng landmarks cũ
-                    if (!transitionStartTimeRef.current) {
-                        transitionStartTimeRef.current = performance.now();
-                    }
                 } else {
                     console.warn('No faces detected');
-                    // Kiểm tra thời gian kể từ lần cuối phát hiện khuôn mặt
                     const timeSinceLastFace = lastFaceDetectedTimeRef.current
                         ? (performance.now() - lastFaceDetectedTimeRef.current) / 1000
                         : Infinity;
-                    // Nếu đã quá 5 giây kể từ lần cuối phát hiện khuôn mặt, bắt đầu mờ dần
                     if (timeSinceLastFace > 5) {
-                        // Mờ dần trong 1 giây (từ 5s đến 6s)
                         const fadeDuration = 1;
                         const fadeStartTime = 5;
                         if (timeSinceLastFace > fadeStartTime + fadeDuration) {
                             lastLandmarksRef.current = null;
-                            newLandmarksRef.current = null;
-                            transitionStartTimeRef.current = null;
                             filterOpacityRef.current = 0;
                         } else {
                             const fadeProgress = (timeSinceLastFace - fadeStartTime) / fadeDuration;
@@ -255,136 +335,74 @@ const RecordCanvas = ({ onRecordingStart, onRecordingStop, selectedFilter, selec
                         }
                     }
                 }
-
-                // Kiểm tra thời gian chuyển đổi giữa landmarks cũ và mới
-                if (transitionStartTimeRef.current && newLandmarksRef.current) {
-                    const timeSinceTransition = (performance.now() - transitionStartTimeRef.current) / 1000;
-                    if (timeSinceTransition > 0.1) { // Chuyển đổi sau 100ms
-                        lastLandmarksRef.current = newLandmarksRef.current;
-                        newLandmarksRef.current = null;
-                        transitionStartTimeRef.current = null;
-                    }
-                }
             } catch (err) {
                 console.error('Face detection error:', err);
             }
 
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            try {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Vẽ background
-            if (backgroundImageRef.current) {
-                console.log('Drawing background image');
-                ctx.drawImage(backgroundImageRef.current, 0, 0, canvas.width, canvas.height);
-            }
+                // Vẽ video webcam
+                console.log('Drawing webcam video');
+                ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
 
-            // Vẽ video webcam
-            console.log('Drawing webcam video');
-            ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+                // Vẽ filter dựa trên lần nhận diện gần nhất
+                if (filterRef.current !== 'none' && lastLandmarksRef.current) {
+                    console.log('Attempting to draw filter:', filterRef.current);
+                    const landmarks = lastLandmarksRef.current;
+                    const rightEye = landmarks[33];
+                    const leftEye = landmarks[263];
+                    const forehead = landmarks[151];
 
-            // Vẽ filter dựa trên lần nhận diện gần nhất
-            if (filterRef.current !== 'none' && lastLandmarksRef.current) {
-                console.log('Attempting to draw filter:', filterRef.current);
-                const landmarks = lastLandmarksRef.current;
-                // MediaPipe FaceLandmarker landmarks: right eye (33), left eye (263), forehead (151)
-                const rightEye = landmarks[33];
-                const leftEye = landmarks[263];
-                const forehead = landmarks[151];
+                    if (!rightEye || !leftEye || !forehead) {
+                        console.warn('Missing required landmarks for drawing filter');
+                        animationFrameId = requestAnimationFrame(renderFrame);
+                        return;
+                    }
 
-                // Lưu trạng thái canvas và áp dụng độ trong suốt
-                ctx.save();
-                ctx.globalAlpha = filterOpacityRef.current;
+                    ctx.save();
+                    ctx.globalAlpha = filterOpacityRef.current;
 
-                if (filterRef.current === 'glasses') {
-                    const glasses = new Image();
-                    glasses.src = '/assets/filters/glasses.png';
-                    console.log('Loading glasses filter:', glasses.src);
-                    fetch(glasses.src, { signal: AbortSignal.timeout(5000) })
-                        .then(res => console.log('Glasses fetch status:', res.status))
-                        .catch(err => console.error('Glasses fetch error:', err));
-                    if (glasses.complete) {
+                    if (filterRef.current === 'glasses' && glassesImageRef.current) {
                         console.log('Drawing glasses filter');
                         const eyeDistance = Math.abs(rightEye.x - leftEye.x) * canvas.width;
-                        const glassesWidth = eyeDistance * 2.5;
-                        // Tính tỷ lệ chiều cao dựa trên tỷ lệ gốc của ảnh
-                        const aspectRatio = glasses.naturalWidth / glasses.naturalHeight;
+                        const glassesWidth = eyeDistance * 2;
+                        const aspectRatio = glassesImageRef.current.naturalWidth / glassesImageRef.current.naturalHeight;
                         const glassesHeight = glassesWidth / aspectRatio;
-                        // Tính trung điểm giữa hai mắt
                         const midEyeX = (leftEye.x + rightEye.x) / 2 * canvas.width;
                         const midEyeY = (leftEye.y + rightEye.y) / 2 * canvas.height;
-                        // Dịch kính xuống một chút để căn chỉnh trên mắt
-                        const offsetY = glassesHeight * 0.1; // Dịch xuống 10% chiều cao kính
+                        const offsetY = glassesHeight * 0.06;
                         ctx.drawImage(
-                            glasses,
-                            midEyeX - (glassesWidth / 2), // Căn giữa theo trục x
-                            midEyeY - (glassesHeight / 2) + offsetY, // Căn giữa theo trục y và dịch xuống
+                            glassesImageRef.current,
+                            midEyeX - (glassesWidth / 2),
+                            midEyeY - (glassesHeight / 2) + offsetY,
                             glassesWidth,
                             glassesHeight
                         );
-                    } else {
-                        glasses.onload = () => {
-                            console.log('Glasses filter loaded');
-                            const eyeDistance = Math.abs(rightEye.x - leftEye.x) * canvas.width;
-                            const glassesWidth = eyeDistance * 2.5;
-                            const aspectRatio = glasses.naturalWidth / glasses.naturalHeight;
-                            const glassesHeight = glassesWidth / aspectRatio;
-                            const midEyeX = (leftEye.x + rightEye.x) / 2 * canvas.width;
-                            const midEyeY = (leftEye.y + rightEye.y) / 2 * canvas.height;
-                            const offsetY = glassesHeight * 0.1;
-                            ctx.drawImage(
-                                glasses,
-                                midEyeX - (glassesWidth / 2),
-                                midEyeY - (glassesHeight / 2) + offsetY,
-                                glassesWidth,
-                                glassesHeight
-                            );
-                        };
-                        glasses.onerror = () => console.error('Error loading glasses filter:', glasses.src);
-                    }
-                } else if (filterRef.current === 'hat') {
-                    const hat = new Image();
-                    hat.src = '/assets/filters/hat.png';
-                    console.log('Loading hat filter:', hat.src);
-                    fetch(hat.src, { signal: AbortSignal.timeout(5000) })
-                        .then(res => console.log('Hat fetch status:', res.status))
-                        .catch(err => console.error('Hat fetch error:', err));
-                    if (hat.complete) {
+                    } else if (filterRef.current === 'hat' && hatImageRef.current) {
                         console.log('Drawing hat filter');
                         const faceWidth = Math.abs(rightEye.x - leftEye.x) * canvas.width * 2;
                         const hatWidth = faceWidth * 1.2;
-                        const hatHeight = hatWidth * 0.5;
+                        const hatHeight = hatWidth * 1;
+                        const offsetY = hatHeight * 0.08;
                         ctx.drawImage(
-                            hat,
+                            hatImageRef.current,
                             (forehead.x * canvas.width) - (hatWidth * 0.5),
-                            (forehead.y * canvas.height) - hatHeight,
+                            (forehead.y * canvas.height) - (hatHeight * 0.8) + offsetY,
                             hatWidth,
                             hatHeight
                         );
-                    } else {
-                        hat.onload = () => {
-                            console.log('Hat filter loaded');
-                            const faceWidth = Math.abs(rightEye.x - leftEye.x) * canvas.width * 2;
-                            const hatWidth = faceWidth * 1.2;
-                            const hatHeight = hatWidth * 0.5;
-                            ctx.drawImage(
-                                hat,
-                                (forehead.x * canvas.width) - (hatWidth * 0.5),
-                                (forehead.y * canvas.height) - hatHeight,
-                                hatWidth,
-                                hatHeight
-                            );
-                        };
-                        hat.onerror = () => console.error('Error loading hat filter:', hat.src);
                     }
-                }
 
-                // Khôi phục trạng thái canvas
-                ctx.restore();
+                    ctx.restore();
+                }
+            } catch (err) {
+                console.error('Error drawing on canvas:', err);
             }
 
             animationFrameId = requestAnimationFrame(renderFrame);
         };
 
-        // Khởi tạo canvas
         const initializeCanvas = () => {
             if (videoRef.current && canvasRef.current && videoRef.current.videoWidth > 0) {
                 console.log('Initializing canvas with video dimensions:', {
@@ -439,10 +457,13 @@ const RecordCanvas = ({ onRecordingStart, onRecordingStop, selectedFilter, selec
             console.error('Error creating mic source:', err);
         }
 
-        if (selectedAudio !== 'none' && audioRef.current) {
+        if (selectedAudioFile && audioRef.current) {
             try {
+                audioRef.current.src = URL.createObjectURL(selectedAudioFile);
+                console.log('Setting audio src:', audioRef.current.src);
                 const audioSource = audioContext.createMediaElementSource(audioRef.current);
                 audioSource.connect(destination);
+                audioRef.current.play().catch(err => console.error('Error playing audio:', err));
             } catch (err) {
                 console.error('Error creating audio source:', err);
             }
@@ -463,6 +484,15 @@ const RecordCanvas = ({ onRecordingStart, onRecordingStop, selectedFilter, selec
             onRecordingStop(url);
             setIsRecording(false);
             audioContext.close();
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `ghi-hinh-${new Date().toISOString()}.webm`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            console.log('Video downloaded automatically');
         };
         recorderRef.current.start();
         setIsRecording(true);
@@ -478,6 +508,24 @@ const RecordCanvas = ({ onRecordingStart, onRecordingStop, selectedFilter, selec
         }
     };
 
+    // Xử lý khi người dùng chọn file âm thanh từ máy tính
+    const handleAudioFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setSelectedAudioFile(file);
+            console.log('Đã chọn file âm thanh:', file.name);
+        } else {
+            setSelectedAudioFile(null);
+            console.log('Không có file âm thanh nào được chọn');
+        }
+    };
+
+    // Xử lý thay đổi filter
+    const handleFilterChange = (e) => {
+        console.log('Bộ lọc đã thay đổi thành:', e.target.value);
+        setSelectedFilter(e.target.value);
+    };
+
     if (error) return <div className="error">Lỗi: {error}</div>;
 
     return (
@@ -486,17 +534,35 @@ const RecordCanvas = ({ onRecordingStart, onRecordingStop, selectedFilter, selec
                 ref={videoRef}
                 autoPlay
                 muted
-                style={{ width: '50%', border: '1px solid red' }} // Hiển thị video để kiểm tra
+                style={{ width: '50%', border: '1px solid red' }}
             />
             <canvas ref={canvasRef} style={{ border: '1px solid blue', width: '100%' }} />
             <audio ref={audioRef} loop style={{ display: 'none' }} />
             <div className="controls">
-                <button onClick={startRecording} disabled={isRecording}>
-                    Start Recording
-                </button>
-                <button onClick={stopRecording} disabled={!isRecording}>
-                    Stop Recording
-                </button>
+                <div className="filter-group">
+                    <select value={selectedFilter} onChange={handleFilterChange} disabled={isRecording}>
+                        <option value="none">Không có bộ lọc</option>
+                        <option value="glasses">Kính</option>
+                        <option value="hat">Mũ</option>
+                    </select>
+                </div>
+                <div className="audio-group">
+                    <input
+                        type="file"
+                        accept="audio/*"
+                        onChange={handleAudioFileChange}
+                        disabled={isRecording}
+                    />
+                    {selectedAudioFile && <span>Đã chọn: {selectedAudioFile.name}</span>}
+                </div>
+                <div className="button-group">
+                    <button onClick={startRecording} disabled={isRecording}>
+                        Bắt đầu ghi hình
+                    </button>
+                    <button onClick={stopRecording} disabled={!isRecording}>
+                        Dừng ghi hình
+                    </button>
+                </div>
             </div>
         </div>
     );

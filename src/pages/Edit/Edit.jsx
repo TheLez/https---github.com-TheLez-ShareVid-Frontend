@@ -8,7 +8,7 @@ const Edit = ({ sidebar, setSidebar }) => {
     const [imageFiles, setImageFiles] = useState([]); // Mảng chứa tối đa 3 ảnh
     const [imagePropsArray, setImagePropsArray] = useState([]); // Mảng chứa thông tin của từng ảnh
     const [audioFile, setAudioFile] = useState(null);
-    const [audioProps, setAudioProps] = useState({ startTime: 0, endTime: 5 });
+    const [audioProps, setAudioProps] = useState({ startTime: 0, endTime: 5 }); // startTime mặc định là 0
     const [videoSize] = useState({ width: 640, height: 360 });
     const [nativeSize, setNativeSize] = useState({ width: 0, height: 0 });
     const [videoDuration, setVideoDuration] = useState(0);
@@ -105,7 +105,7 @@ const Edit = ({ sidebar, setSidebar }) => {
         setImageFiles([]);
         setImagePropsArray([]);
         setAudioFile(null);
-        setAudioProps({ startTime: 0, endTime: 5 });
+        setAudioProps({ startTime: 0, endTime: 5 }); // Đặt lại giá trị mặc định
         setSelectedItem(null);
         setNativeSize({ width: 0, height: 0 });
         setVideoDuration(0);
@@ -593,27 +593,17 @@ const Edit = ({ sidebar, setSidebar }) => {
                                 <div>
                                     <h4>Âm thanh: {selectedItem.file?.name || 'Unknown'}</h4>
                                     <label>
-                                        Thời gian bắt đầu (s):
-                                        <input
-                                            type="number"
-                                            name="startTime"
-                                            value={audioProps.startTime}
-                                            onChange={handleAudioChange}
-                                            min="0"
-                                            max={videoDuration}
-                                        />
-                                    </label>
-                                    <label>
                                         Thời gian kết thúc (s):
                                         <input
                                             type="number"
                                             name="endTime"
                                             value={audioProps.endTime}
                                             onChange={handleAudioChange}
-                                            min={audioProps.startTime}
+                                            min={0}
                                             max={endTime || videoDuration}
                                         />
                                     </label>
+                                    <p>Âm thanh sẽ được phát từ đầu video đến giây thứ {audioProps.endTime}.</p>
                                 </div>
                             )}
                         </div>
