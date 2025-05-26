@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../authContext';
 import axiosInstance from '../../utils/axiosInstance';
 import StudioSideBar from '../../components/SideBar/StudioSideBar';
@@ -18,6 +18,10 @@ const Upload = ({ sidebar, setSidebar }) => {
     const [success, setSuccess] = useState(null);
     const [category, setCategory] = useState(0);
     const [activeCategory, setActiveCategory] = useState(2);
+
+    useEffect(() => {
+        setSidebar(true);
+    }, [setSidebar]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;

@@ -15,9 +15,9 @@ const LikeVideo = ({ sidebar, setSidebar }) => {
     const [loading, setLoading] = useState(false);
     const LIMIT = 20;
 
-    // useEffect(() => {
-    //     setSidebar(true); // Hiện SideBar khi vào trang
-    // }, [setSidebar]);
+    useEffect(() => {
+        setSidebar(true); // Hiện SideBar khi vào trang
+    }, [setSidebar]);
 
     useEffect(() => {
         const fetchLikedVideos = async () => {

@@ -26,6 +26,10 @@ const ManageVideo = ({ sidebar, setSidebar }) => {
     const [formError, setFormError] = useState(null);
     const LIMIT = 10;
 
+    useEffect(() => {
+        setSidebar(true);
+    }, [setSidebar]);
+
     // Fetch danh sách video
     useEffect(() => {
         const fetchVideos = async () => {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import RecordCanvas from '../../components/RecordCanvas/RecordCanvas';
 import ScreenRecorder from '../../components/ScreenRecorder/ScreenRecorder';
 import StudioSideBar from '../../components/SideBar/StudioSideBar';
@@ -9,6 +9,10 @@ const Record = ({ sidebar, setSidebar }) => {
     const [category, setCategory] = useState(0);
     const [activeCategory, setActiveCategory] = useState(3);
     const [selectedMode, setSelectedMode] = useState('webcam');
+
+    useEffect(() => {
+        setSidebar(true);
+    }, [setSidebar]);
 
     const handleRecordingStart = () => {
         setIsRecording(true);

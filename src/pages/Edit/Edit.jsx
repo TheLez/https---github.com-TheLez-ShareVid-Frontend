@@ -31,6 +31,10 @@ const Edit = ({ sidebar, setSidebar }) => {
 
     const defaultImageProps = { x: 0, y: 0, width: 100, height: 100, startTime: 0, endTime: 5 };
 
+    useEffect(() => {
+        setSidebar(true);
+    }, [setSidebar]);
+
     const calculateVideoScale = (videoWidth, videoHeight) => {
         const frameWidth = videoSize.width;
         const frameHeight = videoSize.height;

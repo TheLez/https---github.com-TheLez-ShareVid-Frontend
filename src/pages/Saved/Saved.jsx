@@ -15,9 +15,9 @@ const Saved = ({ sidebar, setSidebar }) => {
     const [loading, setLoading] = useState(false);
     const LIMIT = 20;
 
-    // useEffect(() => {
-    //     setSidebar(true); // Hiện SideBar
-    // }, [setSidebar]);
+    useEffect(() => {
+        setSidebar(true); // Hiện SideBar
+    }, [setSidebar]);
 
     useEffect(() => {
         const fetchSavedVideos = async () => {

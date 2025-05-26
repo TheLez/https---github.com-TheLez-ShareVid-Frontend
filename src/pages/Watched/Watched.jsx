@@ -17,9 +17,9 @@ const Watched = ({ sidebar, setSidebar }) => {
     const [loading, setLoading] = useState(false);
     const LIMIT = 20;
 
-    // useEffect(() => {
-    //     setSidebar(true);
-    // }, [setSidebar]);
+    useEffect(() => {
+        setSidebar(true);
+    }, [setSidebar]);
 
     useEffect(() => {
         const fetchWatchedVideos = async () => {
