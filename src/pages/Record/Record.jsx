@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import RecordCanvas from '../../components/RecordCanvas/RecordCanvas';
 import ScreenRecorder from '../../components/ScreenRecorder/ScreenRecorder';
 import StudioSideBar from '../../components/SideBar/StudioSideBar';
+import Model3DRecorder from '../../components/Model3DRecorder/Model3DRecorder'; // Component mới
 import './Record.scss';
 
 const Record = ({ sidebar, setSidebar }) => {
@@ -42,6 +43,7 @@ const Record = ({ sidebar, setSidebar }) => {
                         <select value={selectedMode} onChange={handleModeChange} disabled={isRecording}>
                             <option value="webcam">Ghi hình webcam</option>
                             <option value="screen">Ghi hình màn hình</option>
+                            <option value="model3d">Ghi hình mô hình 3D</option> {/* Mục mới */}
                         </select>
                     </div>
                 </div>
@@ -50,8 +52,13 @@ const Record = ({ sidebar, setSidebar }) => {
                         onRecordingStart={handleRecordingStart}
                         onRecordingStop={handleRecordingStop}
                     />
-                ) : (
+                ) : selectedMode === 'screen' ? (
                     <ScreenRecorder
+                        onRecordingStart={handleRecordingStart}
+                        onRecordingStop={handleRecordingStop}
+                    />
+                ) : (
+                    <Model3DRecorder
                         onRecordingStart={handleRecordingStart}
                         onRecordingStop={handleRecordingStop}
                     />
