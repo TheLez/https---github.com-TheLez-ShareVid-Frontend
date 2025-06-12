@@ -33,7 +33,8 @@ const Edit = ({ sidebar, setSidebar }) => {
     const [tempText, setTempText] = useState(''); // State tạm thời để lưu giá trị nhập liệu
 
     const defaultImageProps = { x: 0, y: 0, width: 100, height: 100, startTime: 0, endTime: 5 };
-    const defaultTextProps = { text: 'Text', x: 0, y: 0, fontsize: 48, fontcolor: '#FFFFFF', startTime: 0, endTime: 5 };
+    const defaultTextProps = { text: 'Text', x: 0, y: 0, fontsize: 48, fontcolor: '#FFFFFF', startTime: 0, endTime: 5, font: 'Arial' };
+    const availableFonts = ['Arial', 'Times New Roman', 'Algerian Regular', 'Blackadder ITC Regular'];
 
     const calculateVideoScale = (videoWidth, videoHeight) => {
         const frameWidth = videoSize.width;
@@ -265,7 +266,7 @@ const Edit = ({ sidebar, setSidebar }) => {
         if (index >= textPropsArray.length) return;
 
         const { name, value } = e.target;
-        const newValue = name === 'text' || name === 'fontcolor' ? value : parseFloat(value);
+        const newValue = name === 'text' || name === 'fontcolor' || name === 'font' ? value : parseFloat(value);
         const maxEndTime = endTime || videoDuration;
 
         if (name === 'endTime' && newValue > maxEndTime) {
@@ -523,7 +524,7 @@ const Edit = ({ sidebar, setSidebar }) => {
                                         top: adjustedTexts[index].y_display,
                                         left: adjustedTexts[index].x_display,
                                         fontSize: adjustedTexts[index].fontsize_display,
-                                        fontFamily: 'Times New Roman',
+                                        fontFamily: textPropsArray[index].font,
                                         color: textPropsArray[index].fontcolor,
                                         whiteSpace: 'nowrap',
                                         lineHeight: 'normal',
@@ -746,6 +747,20 @@ const Edit = ({ sidebar, setSidebar }) => {
                                         >
                                             OK
                                         </button>
+                                    </label>
+                                    <label>
+                                        Font chữ:
+                                        <select
+                                            name="font"
+                                            value={textPropsArray[selectedItem.type.replace('text', '') - 1]?.font || 'Arial'}
+                                            onChange={(e) => handleTextChange(e, selectedItem.type.replace('text', '') - 1)}
+                                        >
+                                            {availableFonts.map((font) => (
+                                                <option key={font} value={font}>
+                                                    {font}
+                                                </option>
+                                            ))}
+                                        </select>
                                     </label>
                                     <label>
                                         Tọa độ X:

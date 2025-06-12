@@ -6,7 +6,69 @@ import { VRMLoaderPlugin } from '@pixiv/three-vrm';
 import './Model3DRecorder.scss';
 
 // Giải nén từ vision
-const { PoseLandmarker, FilesetResolver } = vision;
+const { FaceLandmarker, FilesetResolver } = vision;
+
+// Định nghĩa các chỉ số landmark cho mắt và miệng
+const eyeKeyIndices = [
+    [
+        // Mắt trái
+        33, 7, 163, 144, 145, 153, 154, 155, 133, // Viền dưới
+        246, 161, 160, 159, 158, 157, 173         // Viền trên
+    ],
+    [
+        // Mắt phải
+        263, 249, 390, 373, 374, 380, 381, 382, 362, // Viền dưới
+        466, 388, 387, 386, 385, 384, 398           // Viền trên
+    ]
+];
+
+const mouthIndices = [78, 81, 13, 311, 308, 402, 14, 178];
+
+// Hàm tính khoảng cách Euclidean giữa hai điểm
+const distance = (p1, p2) => Math.hypot(p2.x - p1.x, p2.y - p1.y);
+
+// Tính Eye Aspect Ratio (EAR)
+const eyeAspectRatio = (landmarks, side) => {
+    const eyeKey = eyeKeyIndices[side === 'LEFT' ? 0 : 1];
+    const p2 = {
+        x: (landmarks[eyeKey[10]].x + landmarks[eyeKey[11]].x) / 2,
+        y: (landmarks[eyeKey[10]].y + landmarks[eyeKey[11]].y) / 2
+    };
+    const p3 = {
+        x: (landmarks[eyeKey[13]].x + landmarks[eyeKey[14]].x) / 2,
+        y: (landmarks[eyeKey[13]].y + landmarks[eyeKey[14]].y) / 2
+    };
+    const p6 = {
+        x: (landmarks[eyeKey[2]].x + landmarks[eyeKey[3]].x) / 2,
+        y: (landmarks[eyeKey[2]].y + landmarks[eyeKey[3]].y) / 2
+    };
+    const p5 = {
+        x: (landmarks[eyeKey[5]].x + landmarks[eyeKey[6]].x) / 2,
+        y: (landmarks[eyeKey[5]].y + landmarks[eyeKey[6]].y) / 2
+    };
+    const p1 = landmarks[eyeKey[0]];
+    const p4 = landmarks[eyeKey[8]];
+    const tipOfEyebrow = side === 'LEFT' ? landmarks[105] : landmarks[334];
+
+    let ear = (distance(p2, p6) + distance(p3, p5)) / (2 * distance(p1, p4) + 1e-6);
+    ear *= (distance(tipOfEyebrow, landmarks[2]) / distance(landmarks[6], landmarks[2]));
+    return ear;
+};
+
+// Tính Mouth Aspect Ratio (MAR)
+const mouthAspectRatio = (landmarks) => {
+    const p1 = landmarks[mouthIndices[0]];  // 78
+    const p2 = landmarks[mouthIndices[1]];  // 81
+    const p3 = landmarks[mouthIndices[2]];  // 13
+    const p4 = landmarks[mouthIndices[3]];  // 311
+    const p5 = landmarks[mouthIndices[4]];  // 308
+    const p6 = landmarks[mouthIndices[5]];  // 402
+    const p7 = landmarks[mouthIndices[6]];  // 14
+    const p8 = landmarks[mouthIndices[7]];  // 178
+
+    const mar = (distance(p2, p8) + distance(p3, p7) + distance(p4, p6)) / (2 * distance(p1, p5) + 1e-6);
+    return mar;
+};
 
 const Model3DRecorder = ({ onRecordingStart, onRecordingStop }) => {
     const videoRef = useRef(null);
@@ -16,33 +78,38 @@ const Model3DRecorder = ({ onRecordingStart, onRecordingStop }) => {
     const rendererRef = useRef(null);
     const vrmRef = useRef(null);
     const recorderRef = useRef(null);
-    const audioContextRef = useRef(null); // Lưu AudioContext để sử dụng khi ghi hình
-    const poseLandmarkerRef = useRef(null);
-    const streamRef = useRef(null); // Lưu luồng video và âm thanh từ webcam
+    const audioContextRef = useRef(null);
+    const faceLandmarkerRef = useRef(null); // Sử dụng FaceLandmarker
+    const streamRef = useRef(null);
     const clockRef = useRef(new THREE.Clock());
     const [vrmLoaded, setVrmLoaded] = useState(false);
     const [error, setError] = useState(null);
     const [isMediaPipeReady, setIsMediaPipeReady] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
 
-    // State để điều chỉnh camera.position.z, vị trí Y, và rotation Y
-    const [cameraZ, setCameraZ] = useState(0.5);
+    // State để điều chỉnh vị trí X, Y, Z và rotation Y của mô hình
+    const [modelX, setModelX] = useState(0);
     const [modelY, setModelY] = useState(-1.5);
+    const [modelZ, setModelZ] = useState(0);
     const [rotationY, setRotationY] = useState(0);
 
     // State để lưu trữ hình ảnh nền
     const [backgroundImage, setBackgroundImage] = useState(null);
 
+    // Mảng để lưu trữ các giá trị EAR và MAR trước đó cho smoothing
+    const earHistory = useRef({ left: [], right: [] });
+    const marHistory = useRef([]);
+
     useEffect(() => {
         // Log để kiểm tra import
         console.log('FilesetResolver:', FilesetResolver);
-        console.log('PoseLandmarker:', PoseLandmarker);
+        console.log('FaceLandmarker:', FaceLandmarker);
 
         // Khởi tạo Three.js
         const scene = new THREE.Scene();
         sceneRef.current = scene;
         const camera = new THREE.PerspectiveCamera(100, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.z = cameraZ;
+        camera.position.z = 1; // Camera Z mặc định là 1, cố định
         cameraRef.current = camera;
         const renderer = new THREE.WebGLRenderer({ canvas: canvasRef.current });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -53,35 +120,30 @@ const Model3DRecorder = ({ onRecordingStart, onRecordingStop }) => {
         light.position.set(1, 1, 1);
         scene.add(light);
 
-        // Khởi tạo PoseLandmarker
-        const initPoseLandmarker = async () => {
+        // Khởi tạo FaceLandmarker
+        const initFaceLandmarker = async () => {
             try {
                 const filesetResolver = await FilesetResolver.forVisionTasks(
                     'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm'
                 );
                 console.log('FilesetResolver khởi tạo thành công');
-                const poseLandmarker = await PoseLandmarker.createFromOptions(filesetResolver, {
+                const faceLandmarker = await FaceLandmarker.createFromOptions(filesetResolver, {
                     baseOptions: {
-                        modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',
-                        delegate: 'GPU',
+                        modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
+                        delegate: 'GPU'
                     },
                     runningMode: 'VIDEO',
-                    numPoses: 1,
-                    minPoseDetectionConfidence: 0.3,
-                    minPosePresenceConfidence: 0.5,
-                    minTrackingConfidence: 0.5,
-                    outputImageWidth: 640,
-                    outputImageHeight: 480,
+                    numFaces: 1
                 });
-                poseLandmarkerRef.current = poseLandmarker;
+                faceLandmarkerRef.current = faceLandmarker;
                 setIsMediaPipeReady(true);
-                console.log('PoseLandmarker khởi tạo thành công');
+                console.log('FaceLandmarker khởi tạo thành công');
             } catch (err) {
-                setError('Lỗi khi khởi tạo PoseLandmarker: ' + err.message);
-                console.error('Lỗi khởi tạo PoseLandmarker:', err);
+                setError('Lỗi khi khởi tạo FaceLandmarker: ' + err.message);
+                console.error('Lỗi khởi tạo FaceLandmarker:', err);
             }
         };
-        initPoseLandmarker();
+        initFaceLandmarker();
 
         // Khởi động webcam và microphone
         const startWebcam = async () => {
@@ -89,7 +151,7 @@ const Model3DRecorder = ({ onRecordingStart, onRecordingStop }) => {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 videoRef.current.srcObject = stream;
                 videoRef.current.play();
-                streamRef.current = stream; // Lưu luồng video và âm thanh
+                streamRef.current = stream;
                 console.log('Webcam và microphone khởi động thành công');
             } catch (err) {
                 setError('Lỗi khi truy cập webcam hoặc microphone: ' + err.message);
@@ -111,7 +173,7 @@ const Model3DRecorder = ({ onRecordingStart, onRecordingStop }) => {
 
         // Dọn dẹp
         return () => {
-            if (poseLandmarkerRef.current) poseLandmarkerRef.current.close();
+            if (faceLandmarkerRef.current) faceLandmarkerRef.current.close();
             if (videoRef.current && videoRef.current.srcObject) {
                 videoRef.current.srcObject.getTracks().forEach(track => track.stop());
             }
@@ -126,13 +188,10 @@ const Model3DRecorder = ({ onRecordingStart, onRecordingStop }) => {
         };
     }, []);
 
-    // Cập nhật camera.position.z, vị trí Y, rotation Y, và background khi state thay đổi
+    // Cập nhật vị trí và xoay của mô hình khi state thay đổi
     useEffect(() => {
-        if (cameraRef.current) {
-            cameraRef.current.position.z = cameraZ;
-        }
         if (vrmRef.current) {
-            vrmRef.current.scene.position.y = modelY;
+            vrmRef.current.scene.position.set(modelX, modelY, modelZ);
             vrmRef.current.scene.rotation.y = rotationY;
         }
         if (sceneRef.current && backgroundImage) {
@@ -144,89 +203,79 @@ const Model3DRecorder = ({ onRecordingStart, onRecordingStop }) => {
                 console.error('Lỗi khi tải background:', err);
             });
         }
-    }, [cameraZ, modelY, rotationY, backgroundImage]);
+    }, [modelX, modelY, modelZ, rotationY, backgroundImage]);
 
-    // Phát hiện tư thế
+    // Phát hiện khuôn mặt và điều khiển mô hình
     useEffect(() => {
-        let blinkTimer = 0;
-        const blinkInterval = 3; // Nháy mắt mỗi 3 giây
-        const detectPoses = async () => {
-            if (!poseLandmarkerRef.current || !videoRef.current || !vrmRef.current) {
-                console.warn('PoseLandmarker, video, hoặc VRM chưa sẵn sàng');
+        const detectFaces = async () => {
+            if (!faceLandmarkerRef.current || !videoRef.current || !vrmRef.current) {
+                console.warn('FaceLandmarker, video, hoặc VRM chưa sẵn sàng');
                 return;
             }
 
             try {
-                const results = await poseLandmarkerRef.current.detectForVideo(
-                    videoRef.current,
-                    performance.now()
-                );
-                console.log('MediaPipe results:', results);
-                if (results.landmarks && results.landmarks[0]) {
-                    const landmarks = results.landmarks[0];
-                    console.log('Landmarks:', landmarks);
-                    const leftEar = landmarks[7]; // Tai trái
-                    const rightEar = landmarks[8]; // Tai phải
-                    const nose = landmarks[0]; // Mũi
-                    const mouthLeft = landmarks[9]; // Miệng trái
-                    const mouthRight = landmarks[10]; // Miệng phải
+                const results = await faceLandmarkerRef.current.detectForVideo(videoRef.current, performance.now());
+                if (results.faceLandmarks && results.faceLandmarks[0]) {
+                    const landmarks = results.faceLandmarks[0];
 
-                    const headBone = vrmRef.current.humanoid.getNormalizedBoneNode('head');
-                    if (headBone && leftEar && rightEar && nose && mouthLeft && mouthRight) {
-                        // Tính góc yaw từ tai
-                        const dx = rightEar.x - leftEar.x;
-                        const dy = rightEar.y - leftEar.y;
-                        const yaw = Math.atan2(dy, dx);
-                        const yawSensitivity = 4;
-                        console.log('Yaw angle:', yaw);
-                        headBone.rotation.y = yaw * yawSensitivity;
+                    // Nháy mắt (đã hoạt động)
+                    const leftEAR = eyeAspectRatio(landmarks, 'LEFT');
+                    const rightEAR = eyeAspectRatio(landmarks, 'RIGHT');
+                    const blinkThreshold = 0.3; // Ngưỡng nháy mắt
+                    // Smoothing EAR
+                    earHistory.current.left.push(leftEAR);
+                    earHistory.current.right.push(rightEAR);
+                    if (earHistory.current.left.length > 5) earHistory.current.left.shift();
+                    if (earHistory.current.right.length > 5) earHistory.current.right.shift();
+                    const avgLeftEAR = earHistory.current.left.reduce((a, b) => a + b, 0) / earHistory.current.left.length;
+                    const avgRightEAR = earHistory.current.right.reduce((a, b) => a + b, 0) / earHistory.current.right.length;
+                    console.log('Avg Left EAR:', avgLeftEAR.toFixed(3), 'Avg Right EAR:', avgRightEAR.toFixed(3));
+                    vrmRef.current.expressionManager.setValue('blink', (avgLeftEAR < blinkThreshold || avgRightEAR < blinkThreshold) ? 1 : 0);
 
-                        // Tính góc pitch từ mũi
-                        const centerY = 0.5;
-                        const pitchSensitivity = 1.5;
-                        const pitch = (nose.y - centerY) * Math.PI * pitchSensitivity;
-                        console.log('Pitch angle:', pitch);
-                        headBone.rotation.x = pitch;
-
-                        // Ước lượng mở miệng bằng khoảng cách dọc từ mũi đến điểm giữa miệng
-                        const mouthMidY = (mouthLeft.y + mouthRight.y) / 2;
-                        const dist = mouthMidY - nose.y;
-                        const minDist = 0.05;
-                        const maxDist = 0.15;
-                        const mouthOpenness = Math.min(Math.max((dist - minDist) / (maxDist - minDist), 0), 1);
-                        console.log('Mouth distance:', dist);
-                        console.log('Mouth openness:', mouthOpenness);
-                        vrmRef.current.expressionManager.setValue('a', mouthOpenness);
-
-                        // Thử cách cũ với khoảng cách ngang, tăng hệ số nhân
-                        const mouthWidth = Math.abs(mouthRight.x - mouthLeft.x);
-                        const mouthOpennessHorizontal = Math.min(Math.max(mouthWidth * 10, 0), 1);
-                        console.log('Mouth openness (horizontal):', mouthOpennessHorizontal);
-
-                        // Mô phỏng nháy mắt định kỳ
-                        blinkTimer += clockRef.current.getDelta();
-                        if (blinkTimer > blinkInterval) {
-                            vrmRef.current.expressionManager.setValue('blink', 1);
-                            setTimeout(() => {
-                                vrmRef.current.expressionManager.setValue('blink', 0);
-                            }, 200);
-                            blinkTimer = 0;
-                        }
+                    // Cử động miệng
+                    const mar = mouthAspectRatio(landmarks);
+                    // Smoothing MAR
+                    marHistory.current.push(mar);
+                    if (marHistory.current.length > 5) marHistory.current.shift();
+                    const avgMAR = marHistory.current.reduce((a, b) => a + b, 0) / marHistory.current.length;
+                    const minMAR = 0.03; // Điều chỉnh dựa trên Raw MAR nhỏ nhất (0.038)
+                    const maxMAR = 1.7;  // Điều chỉnh dựa trên Raw MAR lớn nhất (1.685)
+                    const mouthOpenness = Math.min(Math.max((avgMAR - minMAR) / (maxMAR - minMAR), 0), 1);
+                    console.log('Raw MAR:', mar.toFixed(3), 'Avg MAR:', avgMAR.toFixed(3), 'Mouth openness:', mouthOpenness.toFixed(3));
+                    const MOUTH_BLENDSHAPE = 'aa'; // Thử 'a', 'A', 'mouthOpen', 'jawOpen' dựa trên log
+                    if (vrmRef.current.expressionManager) {
+                        vrmRef.current.expressionManager.setValue(MOUTH_BLENDSHAPE, mouthOpenness);
+                        console.log(`Set blendshape ${MOUTH_BLENDSHAPE} to ${mouthOpenness.toFixed(3)}`);
                     } else {
-                        console.warn('Thiếu landmarks hoặc bone head');
+                        console.warn('expressionManager không khả dụng');
+                    }
+
+                    // Xoay đầu
+                    const leftSide = landmarks[127]; // Điểm bên trái khuôn mặt
+                    const rightSide = landmarks[356]; // Điểm bên phải khuôn mặt
+                    const nose = landmarks[1]; // Điểm mũi
+                    if (leftSide && rightSide && nose) {
+                        const dx = rightSide.x - leftSide.x;
+                        const dy = rightSide.y - leftSide.y;
+                        const yaw = Math.atan2(dy, dx) * 4; // Độ nhạy yaw
+                        const pitch = (nose.y - 0.5) * Math.PI * 1.5; // Độ nhạy pitch
+                        const headBone = vrmRef.current.humanoid.getNormalizedBoneNode('head');
+                        if (headBone) {
+                            headBone.rotation.y = yaw;
+                            headBone.rotation.x = pitch;
+                        }
                     }
                 } else {
-                    console.warn('Không nhận diện được landmarks từ MediaPipe');
+                    console.warn('Không nhận diện được khuôn mặt');
                 }
             } catch (err) {
-                console.error('Lỗi phát hiện tư thế:', err);
+                console.error('Lỗi phát hiện khuôn mặt:', err);
             }
-            requestAnimationFrame(detectPoses);
+            requestAnimationFrame(detectFaces);
         };
 
         if (isMediaPipeReady && vrmLoaded) {
-            console.log('Bắt đầu nhận diện tư thế...');
-            detectPoses();
+            detectFaces();
         }
     }, [isMediaPipeReady, vrmLoaded]);
 
@@ -281,28 +330,39 @@ const Model3DRecorder = ({ onRecordingStart, onRecordingStop }) => {
                     const rightLowerArm = vrm.humanoid.getNormalizedBoneNode('rightLowerArm');
 
                     if (leftUpperArm) {
-                        leftUpperArm.rotation.z = -Math.PI / 2.2;
+                        leftUpperArm.rotation.z = -Math.PI / 2.2; // Hạ tay trái xuống
                         console.log('Adjusted leftUpperArm rotation.z:', leftUpperArm.rotation.z);
                     } else {
                         console.warn('Không tìm thấy bone leftUpperArm');
                     }
                     if (rightUpperArm) {
-                        rightUpperArm.rotation.z = Math.PI / 2.2;
+                        rightUpperArm.rotation.z = Math.PI / 2.2; // Hạ tay phải xuống
                         console.log('Adjusted rightUpperArm rotation.z:', rightUpperArm.rotation.z);
                     } else {
                         console.warn('Không tìm thấy bone rightUpperArm');
                     }
                     if (leftLowerArm) {
-                        leftLowerArm.rotation.z = 0.2;
+                        leftLowerArm.rotation.z = 0.2; // Tinh chỉnh khuỷu tay trái
                         console.log('Adjusted leftLowerArm rotation.z:', leftLowerArm.rotation.z);
                     }
                     if (rightLowerArm) {
-                        rightLowerArm.rotation.z = -0.2;
+                        rightLowerArm.rotation.z = -0.2; // Tinh chỉnh khuỷu tay phải
                         console.log('Adjusted rightLowerArm rotation.z:', rightLowerArm.rotation.z);
                     }
 
+                    // Thử nhiều cách để log danh sách blendshape
+                    if (vrm.expressionManager && vrm.expressionManager._expressionsMap) {
+                        const expressionNames = Object.keys(vrm.expressionManager._expressionsMap);
+                        console.log('Available expression names (expressionManager):', expressionNames);
+                    } else if (vrm.blendShapeProxy) {
+                        const blendShapeNames = Object.keys(vrm.blendShapeProxy._blendShapes);
+                        console.log('Available blendshape names (blendShapeProxy):', blendShapeNames);
+                    } else {
+                        console.log('VRM object for debugging:', vrm);
+                    }
+
                     // Điều chỉnh vị trí và xoay model
-                    vrm.scene.position.set(0, modelY, 0);
+                    vrm.scene.position.set(modelX, modelY, modelZ);
                     vrm.scene.rotation.y = rotationY;
                     sceneRef.current.add(vrm.scene);
                     vrmRef.current = vrm;
@@ -332,7 +392,7 @@ const Model3DRecorder = ({ onRecordingStart, onRecordingStop }) => {
             return;
         }
         if (!isMediaPipeReady) {
-            setError('PoseLandmarker chưa sẵn sàng');
+            setError('FaceLandmarker chưa sẵn sàng');
             return;
         }
 
@@ -434,20 +494,20 @@ const Model3DRecorder = ({ onRecordingStart, onRecordingStop }) => {
                 <button onClick={handleStopRecording} disabled={!vrmLoaded || !isMediaPipeReady || !isRecording}>
                     Dừng ghi
                 </button>
-                {/* Thanh trượt điều chỉnh camera.position.z */}
+                {/* Thanh trượt điều chỉnh model X position */}
                 <div style={{ marginTop: '10px' }}>
-                    <label>Camera Z: {cameraZ.toFixed(2)}</label>
+                    <label>Model X Position: {modelX.toFixed(2)}</label>
                     <input
                         type="range"
-                        min="0.1"
+                        min="-5"
                         max="5"
                         step="0.1"
-                        value={cameraZ}
-                        onChange={(e) => setCameraZ(parseFloat(e.target.value))}
+                        value={modelX}
+                        onChange={(e) => setModelX(parseFloat(e.target.value))}
                         style={{ width: '100%' }}
                     />
                 </div>
-                {/* Thanh trượt điều chỉnh vị trí Y của mô hình */}
+                {/* Thanh trượt điều chỉnh position Y của mô hình */}
                 <div style={{ marginTop: '10px' }}>
                     <label>Model Y Position: {modelY.toFixed(2)}</label>
                     <input
@@ -457,6 +517,19 @@ const Model3DRecorder = ({ onRecordingStart, onRecordingStop }) => {
                         step="0.1"
                         value={modelY}
                         onChange={(e) => setModelY(parseFloat(e.target.value))}
+                        style={{ width: '100%' }}
+                    />
+                </div>
+                {/* Thanh trượt điều chỉnh model Z position */}
+                <div style={{ marginTop: '10px' }}>
+                    <label>Model Z Position: {modelZ.toFixed(2)}</label>
+                    <input
+                        type="range"
+                        min="-5"
+                        max="5"
+                        step="0.1"
+                        value={modelZ}
+                        onChange={(e) => setModelZ(parseFloat(e.target.value))}
                         style={{ width: '100%' }}
                     />
                 </div>
