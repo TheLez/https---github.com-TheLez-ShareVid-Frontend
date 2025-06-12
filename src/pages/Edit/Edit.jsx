@@ -34,7 +34,7 @@ const Edit = ({ sidebar, setSidebar }) => {
 
     const defaultImageProps = { x: 0, y: 0, width: 100, height: 100, startTime: 0, endTime: 5 };
     const defaultTextProps = { text: 'Text', x: 0, y: 0, fontsize: 48, fontcolor: '#FFFFFF', startTime: 0, endTime: 5, font: 'Arial' };
-    const availableFonts = ['Arial', 'Times New Roman', 'Algerian Regular', 'Blackadder ITC Regular'];
+    const availableFonts = ['Arial', 'Times New Roman', 'Comic Sans MS', 'Segoe UI'];
 
     const calculateVideoScale = (videoWidth, videoHeight) => {
         const frameWidth = videoSize.width;
