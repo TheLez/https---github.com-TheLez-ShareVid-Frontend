@@ -11,18 +11,20 @@ const ScreenRecorder = ({ onRecordingStart, onRecordingStop }) => {
     const recordedChunksRef = useRef([]);
     const screenStreamRef = useRef(null);
     const webcamStreamRef = useRef(null);
+    const micStreamRef = useRef(null); // Luồng mic
+    const audioContextRef = useRef(null); // AudioContext để kết hợp âm thanh
     const screenVideoRef = useRef(null);
     const webcamVideoRef = useRef(null);
     const isMountedRef = useRef(true);
 
-    // Kiểm tra quyền truy cập webcam
-    const checkWebcamPermission = async () => {
+    // Kiểm tra quyền truy cập webcam và mic
+    const checkPermission = async (deviceType) => {
         try {
-            const permissionStatus = await navigator.permissions.query({ name: 'camera' });
-            console.log('Camera permission status:', permissionStatus.state);
+            const permissionStatus = await navigator.permissions.query({ name: deviceType });
+            console.log(`${deviceType} permission status:`, permissionStatus.state);
             return permissionStatus.state === 'granted';
         } catch (err) {
-            console.error('Lỗi khi kiểm tra quyền webcam:', err);
+            console.error(`Lỗi khi kiểm tra quyền ${deviceType}:`, err);
             return false;
         }
     };
@@ -33,12 +35,12 @@ const ScreenRecorder = ({ onRecordingStart, onRecordingStop }) => {
             console.error('webcamVideoRef.current is null when waiting for metadata');
             return false;
         }
-        if (webcamVideoRef.current.readyState >= 1) return true; // Metadata đã tải
+        if (webcamVideoRef.current.readyState >= 1) return true;
         return new Promise((resolve) => {
             const timeout = setTimeout(() => {
                 console.warn('Timeout waiting for webcam metadata');
                 resolve(false);
-            }, 5000); // Timeout 5 giây
+            }, 5000);
 
             webcamVideoRef.current.onloadedmetadata = () => {
                 console.log('Webcam metadata loaded');
@@ -53,15 +55,24 @@ const ScreenRecorder = ({ onRecordingStart, onRecordingStop }) => {
         });
     };
 
-    // Bật webcam và mở PiP sau khi render
+    // Bật webcam và mic, mở PiP sau khi render
     useEffect(() => {
         console.log('useEffect for webcam, useWebcam:', useWebcam);
         if (!useWebcam) {
-            // Tắt webcam
+            // Tắt webcam và mic
             if (webcamStreamRef.current) {
                 console.log('Tắt webcam...');
                 webcamStreamRef.current.getTracks().forEach(track => track.stop());
                 webcamStreamRef.current = null;
+            }
+            if (micStreamRef.current) {
+                console.log('Tắt mic...');
+                micStreamRef.current.getTracks().forEach(track => track.stop());
+                micStreamRef.current = null;
+            }
+            if (audioContextRef.current) {
+                audioContextRef.current.close();
+                audioContextRef.current = null;
             }
             if (document.pictureInPictureElement) {
                 console.log('Thoát PiP...');
@@ -80,31 +91,40 @@ const ScreenRecorder = ({ onRecordingStart, onRecordingStop }) => {
             return;
         }
 
-        // Bật webcam
-        const startWebcam = async () => {
-            console.log('Bật webcam...');
-            const hasPermission = await checkWebcamPermission();
-            if (!hasPermission) {
-                setError('Quyền truy cập webcam không được cấp. Vui lòng kiểm tra cài đặt trình duyệt.');
-                console.error('Quyền webcam không được cấp');
+        // Bật webcam và mic
+        const startWebcamAndMic = async () => {
+            console.log('Bật webcam và mic...');
+            const hasWebcamPermission = await checkPermission('camera');
+            const hasMicPermission = await checkPermission('microphone');
+            if (!hasWebcamPermission || !hasMicPermission) {
+                setError('Quyền truy cập webcam hoặc mic không được cấp. Vui lòng kiểm tra cài đặt trình duyệt.');
+                console.error('Quyền webcam hoặc mic không được cấp');
                 return;
             }
 
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const webcamStream = await navigator.mediaDevices.getUserMedia({ video: true });
                 if (!isMountedRef.current) {
                     console.log('Component unmounted, stopping webcam stream...');
-                    stream.getTracks().forEach(track => track.stop());
+                    webcamStream.getTracks().forEach(track => track.stop());
                     return;
                 }
-                console.log('Webcam stream obtained:', stream);
-                webcamStreamRef.current = stream;
+                console.log('Webcam stream obtained:', webcamStream);
+                webcamStreamRef.current = webcamStream;
+
+                const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                if (!isMountedRef.current) {
+                    console.log('Component unmounted, stopping mic stream...');
+                    micStream.getTracks().forEach(track => track.stop());
+                    return;
+                }
+                console.log('Mic stream obtained:', micStream);
+                micStreamRef.current = micStream;
 
                 if (webcamVideoRef.current) {
                     console.log('Attaching stream to webcam video element');
-                    webcamVideoRef.current.srcObject = stream;
+                    webcamVideoRef.current.srcObject = webcamStream;
 
-                    // Đợi metadata tải trước khi phát và mở PiP
                     const metadataLoaded = await waitForWebcamMetadata();
                     if (!metadataLoaded) {
                         setError('Không thể tải metadata của video webcam.');
@@ -113,14 +133,13 @@ const ScreenRecorder = ({ onRecordingStart, onRecordingStop }) => {
 
                     if (!isMountedRef.current) {
                         console.log('Component unmounted, stopping webcam stream...');
-                        stream.getTracks().forEach(track => track.stop());
+                        webcamStream.getTracks().forEach(track => track.stop());
                         return;
                     }
 
                     console.log('Phát video webcam...');
                     await webcamVideoRef.current.play();
 
-                    // Thử mở PiP
                     try {
                         console.log('Kiểm tra trạng thái PiP hiện tại...');
                         if (document.pictureInPictureElement) {
@@ -142,12 +161,12 @@ const ScreenRecorder = ({ onRecordingStart, onRecordingStop }) => {
                     setError('Không thể truy cập thẻ video webcam');
                 }
             } catch (err) {
-                console.error('Lỗi khi truy cập webcam:', err);
-                setError('Không thể truy cập webcam: ' + err.message);
+                console.error('Lỗi khi truy cập webcam hoặc mic:', err);
+                setError('Không thể truy cập webcam hoặc mic: ' + err.message);
             }
         };
 
-        startWebcam();
+        startWebcamAndMic();
     }, [useWebcam]);
 
     // Bật hoặc tắt webcam (chỉ cập nhật trạng thái useWebcam)
@@ -166,9 +185,17 @@ const ScreenRecorder = ({ onRecordingStart, onRecordingStop }) => {
                 webcamStreamRef.current.getTracks().forEach(track => track.stop());
                 webcamStreamRef.current = null;
             }
+            if (micStreamRef.current) {
+                micStreamRef.current.getTracks().forEach(track => track.stop());
+                micStreamRef.current = null;
+            }
             if (screenStreamRef.current) {
                 screenStreamRef.current.getTracks().forEach(track => track.stop());
                 screenStreamRef.current = null;
+            }
+            if (audioContextRef.current) {
+                audioContextRef.current.close();
+                audioContextRef.current = null;
             }
         };
     }, []);
@@ -205,7 +232,33 @@ const ScreenRecorder = ({ onRecordingStart, onRecordingStop }) => {
             }
 
             recordedChunksRef.current = [];
-            recorderRef.current = new MediaRecorder(screenStream, { mimeType: 'video/webm; codecs=vp9' });
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            audioContextRef.current = audioContext;
+            const destination = audioContext.createMediaStreamDestination();
+
+            // Kết hợp âm thanh hệ thống và mic bằng AudioContext
+            if (screenStreamRef.current) {
+                const screenAudioSource = audioContext.createMediaStreamSource(screenStreamRef.current);
+                screenAudioSource.connect(destination);
+                console.log('Connected screen audio to AudioContext');
+            }
+
+            if (micStreamRef.current) {
+                const micAudioSource = audioContext.createMediaStreamSource(micStreamRef.current);
+                micAudioSource.connect(destination);
+                console.log('Connected mic audio to AudioContext');
+            }
+
+            const combinedStream = new MediaStream([
+                ...screenStreamRef.current.getVideoTracks(),
+                destination.stream.getAudioTracks()[0], // Chỉ lấy track audio từ destination
+            ]);
+            console.log('Combined stream tracks:', {
+                videoTracks: combinedStream.getVideoTracks().length,
+                audioTracks: combinedStream.getAudioTracks().length,
+            });
+
+            recorderRef.current = new MediaRecorder(combinedStream, { mimeType: 'video/webm; codecs=vp9' });
             recorderRef.current.ondataavailable = (e) => {
                 console.log('Dữ liệu ghi hình:', e.data.size, 'bytes');
                 if (e.data.size > 0) {
@@ -244,6 +297,14 @@ const ScreenRecorder = ({ onRecordingStart, onRecordingStop }) => {
                     }
                     setUseWebcam(false);
                     setIsPipActive(false);
+                }
+                if (micStreamRef.current) {
+                    micStreamRef.current.getTracks().forEach(track => track.stop());
+                    micStreamRef.current = null;
+                }
+                if (audioContextRef.current) {
+                    audioContextRef.current.close();
+                    audioContextRef.current = null;
                 }
             };
             recorderRef.current.start();
