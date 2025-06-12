@@ -30,7 +30,7 @@ const Edit = ({ sidebar, setSidebar }) => {
     const [audioLoaded, setAudioLoaded] = useState(false);
     const [category, setCategory] = useState(0);
     const [activeCategory, setActiveCategory] = useState(4);
-    const [tempText, setTempText] = useState(''); // State tạm thời để lưu giá trị nhập liệu
+    const [tempText, setTempText] = useState('');
 
     const defaultImageProps = { x: 0, y: 0, width: 100, height: 100, startTime: 0, endTime: 5 };
     const defaultTextProps = { text: 'Text', x: 0, y: 0, fontsize: 48, fontcolor: '#FFFFFF', startTime: 0, endTime: 5, font: 'Arial' };
@@ -87,7 +87,7 @@ const Edit = ({ sidebar, setSidebar }) => {
                 const { videoWidth, videoHeight, duration } = video;
                 setNativeSize({ width: videoWidth, height: videoHeight });
                 setVideoDuration(duration);
-                setEndTime(duration);
+                setEndTime(duration / speed);
                 const scaleData = calculateVideoScale(videoWidth, videoHeight);
                 setVideoScaleData(scaleData);
                 setSelectedItem({ type: 'video', file });
@@ -116,7 +116,7 @@ const Edit = ({ sidebar, setSidebar }) => {
 
     const handleTextInput = (e, index) => {
         const newText = e.target.value;
-        setTempText(newText); // Lưu giá trị nhập liệu vào state tạm thời
+        setTempText(newText);
     };
 
     const handleTextUpdate = (index) => {
@@ -209,19 +209,16 @@ const Edit = ({ sidebar, setSidebar }) => {
         if (audioRef.current) {
             audioRef.current.playbackRate = 1;
         }
-    }, [speed]);
+        if (videoDuration > 0) {
+            setEndTime(videoDuration / speed);
+        }
+    }, [speed, videoDuration]);
 
     const handleImageChange = (e, index) => {
         if (index >= imagePropsArray.length) return;
 
         const { name, value } = e.target;
         const newValue = parseFloat(value);
-        const maxEndTime = endTime || videoDuration;
-
-        if (name === 'endTime' && newValue > maxEndTime) {
-            alert(`Thời gian kết thúc không được vượt quá thời gian video (${maxEndTime}s)`);
-            return;
-        }
 
         if (name === 'x') {
             const maxX = nativeSize.width - imagePropsArray[index].width;
@@ -267,12 +264,6 @@ const Edit = ({ sidebar, setSidebar }) => {
 
         const { name, value } = e.target;
         const newValue = name === 'text' || name === 'fontcolor' || name === 'font' ? value : parseFloat(value);
-        const maxEndTime = endTime || videoDuration;
-
-        if (name === 'endTime' && newValue > maxEndTime) {
-            alert(`Thời gian kết thúc không được vượt quá thời gian video (${maxEndTime}s)`);
-            return;
-        }
 
         if (name === 'startTime' && newValue < 0) {
             alert(`Thời gian bắt đầu không được nhỏ hơn 0`);
@@ -312,12 +303,6 @@ const Edit = ({ sidebar, setSidebar }) => {
     const handleAudioChange = (e) => {
         const { name, value } = e.target;
         const newValue = parseFloat(value);
-        const maxEndTime = endTime || videoDuration;
-
-        if (name === 'endTime' && newValue > maxEndTime) {
-            alert(`Thời gian kết thúc không được vượt quá thời gian video (${maxEndTime}s)`);
-            return;
-        }
 
         if (name === 'startTime' && newValue < 0) {
             alert(`Thời gian bắt đầu không được nhỏ hơn 0`);
@@ -623,7 +608,6 @@ const Edit = ({ sidebar, setSidebar }) => {
                                             value={startTime}
                                             onChange={(e) => setStartTime(parseFloat(e.target.value))}
                                             min="0"
-                                            max={videoDuration}
                                         />
                                     </label>
                                     <label>
@@ -633,7 +617,6 @@ const Edit = ({ sidebar, setSidebar }) => {
                                             value={endTime || ''}
                                             onChange={(e) => setEndTime(parseFloat(e.target.value) || null)}
                                             min={startTime}
-                                            max={videoDuration}
                                             placeholder="Cuối video"
                                         />
                                     </label>
@@ -713,7 +696,6 @@ const Edit = ({ sidebar, setSidebar }) => {
                                             value={imagePropsArray[selectedItem.type.replace('image', '') - 1]?.startTime || 0}
                                             onChange={(e) => handleImageChange(e, selectedItem.type.replace('image', '') - 1)}
                                             min="0"
-                                            max={videoDuration}
                                         />
                                     </label>
                                     <label>
@@ -724,7 +706,6 @@ const Edit = ({ sidebar, setSidebar }) => {
                                             value={imagePropsArray[selectedItem.type.replace('image', '') - 1]?.endTime || 5}
                                             onChange={(e) => handleImageChange(e, selectedItem.type.replace('image', '') - 1)}
                                             min={imagePropsArray[selectedItem.type.replace('image', '') - 1]?.startTime || 0}
-                                            max={endTime || videoDuration}
                                         />
                                     </label>
                                 </div>
@@ -809,7 +790,6 @@ const Edit = ({ sidebar, setSidebar }) => {
                                             value={textPropsArray[selectedItem.type.replace('text', '') - 1]?.startTime || 0}
                                             onChange={(e) => handleTextChange(e, selectedItem.type.replace('text', '') - 1)}
                                             min="0"
-                                            max={videoDuration}
                                         />
                                     </label>
                                     <label>
@@ -820,7 +800,6 @@ const Edit = ({ sidebar, setSidebar }) => {
                                             value={textPropsArray[selectedItem.type.replace('text', '') - 1]?.endTime || 5}
                                             onChange={(e) => handleTextChange(e, selectedItem.type.replace('text', '') - 1)}
                                             min={textPropsArray[selectedItem.type.replace('text', '') - 1]?.startTime || 0}
-                                            max={endTime || videoDuration}
                                         />
                                     </label>
                                 </div>
@@ -836,7 +815,6 @@ const Edit = ({ sidebar, setSidebar }) => {
                                             value={audioProps.endTime}
                                             onChange={handleAudioChange}
                                             min={0}
-                                            max={endTime || videoDuration}
                                         />
                                     </label>
                                     <p>Âm thanh sẽ được phát từ đầu video đến giây thứ {audioProps.endTime}.</p>
