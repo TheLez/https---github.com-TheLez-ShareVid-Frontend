@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import './PlayVideo.scss';
 import axiosInstance from '../../utils/axiosInstance';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -23,7 +23,73 @@ const PlayVideo = ({ onVideoTypeChange }) => {
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [isFetching, setIsFetching] = useState(false);
+    const [watchTime, setWatchTime] = useState(0); // Giữ cho UI (nếu cần)
+    const watchTimeRef = useRef(0); // Lưu watchTime thực tế
+    const [watchedId, setWatchedId] = useState(null);
     const defaultAvatar = 'https://static.thenounproject.com/png/4530368-200.png';
+    const hasAddedWatched = useRef(false);
+
+    // Debug mount/unmount
+    useEffect(() => {
+        console.log('PlayVideo component mounted');
+        return () => console.log('PlayVideo component unmounted');
+    }, []);
+
+    // Hàm chuyển đổi watchTime (giây) sang HH:MM:SS
+    const formatWatchTime = (timeInSeconds) => {
+        const hours = Math.floor(timeInSeconds / 3600);
+        const minutes = Math.floor((timeInSeconds % 3600) / 60);
+        const seconds = timeInSeconds % 60;
+        return `${hours.toString().padStart(2, '0')}:${minutes
+            .toString()
+            .padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    };
+
+    // Đếm thời gian và cập nhật bản ghi watched khi rời trang
+    useEffect(() => {
+        console.log('Starting watch time counter for videoId:', videoId);
+        const timeInterval = setInterval(() => {
+            watchTimeRef.current += 1;
+            setWatchTime(watchTimeRef.current); // Cập nhật state cho UI (nếu cần)
+            console.log('watchTime incremented:', watchTimeRef.current);
+        }, 1000);
+
+        // Cleanup: Gửi cập nhật khi component unmount
+        return () => {
+            clearInterval(timeInterval);
+            console.log('Cleanup triggered with:', { userId: user?.id, watchedId, watchTime: watchTimeRef.current });
+            if (user?.id && watchedId) {
+                const formattedWatchTime = formatWatchTime(watchTimeRef.current);
+                console.log('Sending watch time update on unmount:', {
+                    userid: user.id,
+                    watchedid: watchedId,
+                    watch_time: formattedWatchTime,
+                });
+
+                axiosInstance
+                    .put(`/watched/update/${watchedId}`, {
+                        watch_time: formattedWatchTime,
+                        created_at: new Date().toISOString(),
+                    })
+                    .then(response => {
+                        console.log('Watch time updated successfully:', response.data);
+                    })
+                    .catch(error => {
+                        console.error('❌ Error updating watched record:', {
+                            message: error.message,
+                            response: error.response?.data,
+                            status: error.response?.status,
+                        });
+                    });
+            } else {
+                console.log('Skipped watch time update due to missing:', {
+                    userId: user?.id,
+                    watchedId,
+                    watchTime: watchTimeRef.current,
+                });
+            }
+        };
+    }, [user?.id, videoId, watchedId]);
 
     useEffect(() => {
         console.log('PlayVideo useEffect running for videoId:', videoId);
@@ -37,6 +103,10 @@ const PlayVideo = ({ onVideoTypeChange }) => {
         setHasMore(true);
         setError(null);
         setLoading(true);
+        setWatchTime(0);
+        watchTimeRef.current = 0; // Reset watchTimeRef
+        setWatchedId(null);
+        hasAddedWatched.current = false;
 
         const fetchVideo = async () => {
             try {
@@ -45,7 +115,6 @@ const PlayVideo = ({ onVideoTypeChange }) => {
                 if (response.status === 200) {
                     const videoData = response.data;
                     console.log('Video data:', videoData);
-                    // Kiểm tra quyền truy cập
                     if (videoData.status === 0 && (!user?.id || String(user.id) !== String(videoData.Account.userid))) {
                         setError('Bạn không có quyền xem video này.');
                         return;
@@ -56,13 +125,31 @@ const PlayVideo = ({ onVideoTypeChange }) => {
                     if (videoType === undefined || videoType === null) {
                         setError('Không có loại video hợp lệ.');
                     } else {
-                        onVideoTypeChange(videoType); // Gọi callback để cập nhật videoType
+                        onVideoTypeChange(videoType);
                     }
-                    await updateViewCount();
+
+                    // Tạo bản ghi watched chỉ một lần nếu người dùng đăng nhập
+                    if (user?.id && !hasAddedWatched.current) {
+                        try {
+                            hasAddedWatched.current = true;
+                            const watchedResponse = await axiosInstance.post('/watched/add', {
+                                videoid: parseInt(videoId),
+                            });
+                            if (watchedResponse.status === 201) {
+                                const { watchedid } = watchedResponse.data.data;
+                                console.log('Created watched record, watchedid:', watchedid);
+                                setWatchedId(watchedid);
+                            }
+                        } catch (watchedError) {
+                            console.error('❌ Lỗi khi tạo bản ghi watched:', watchedError);
+                        }
+                    }
+
+                    // Tạm bỏ tính năng increment view
+                    // await updateViewCount();
                     await checkUserLike();
                     await checkSubscribe(videoData.Account.userid);
                     await checkSaved();
-                    // Tải bình luận cho video mới
                     console.log('Calling fetchComments for video:', videoData.videoid);
                     await fetchComments(1);
                 } else {
@@ -77,7 +164,7 @@ const PlayVideo = ({ onVideoTypeChange }) => {
         };
 
         fetchVideo();
-    }, [videoId, user, onVideoTypeChange]);
+    }, [videoId, user?.id, onVideoTypeChange]);
 
     const updateViewCount = async () => {
         try {
@@ -235,7 +322,7 @@ const PlayVideo = ({ onVideoTypeChange }) => {
                 videotype,
             }));
             alert('Cập nhật thông tin video thành công!');
-            onVideoTypeChange(videotype); // Cập nhật videoType khi video được sửa
+            onVideoTypeChange(videotype);
         } catch (error) {
             console.error('Lỗi khi cập nhật thông tin video:', error.response?.data || error.message);
             alert('Không thể cập nhật thông tin video. Vui lòng thử lại.');
